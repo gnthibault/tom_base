@@ -28,6 +28,17 @@ git pull upstream dev
 # Then git rebase from your current dev branch, most likely gnthibault-dev
 ```
 
+## Install prerequisite for gcp deployment
+
+```bash
+# On mac
+curl -o cloud-sql-proxy https://storage.googleapis.com/cloud-sql-connectors/cloud-sql-proxy/v2.13.0/cloud-sql-proxy.darwin.amd64
+# On linux
+curl -o cloud-sql-proxy https://storage.googleapis.com/cloud-sql-connectors/cloud-sql-proxy/v2.13.0/cloud-sql-proxy.linux.amd64
+# Then
+chmod +x cloud-sql-proxy
+```
+
 ## Rest of the original doc
 The TOM Toolkit is a web framework for building TOMs: Target and Observation
 Managers. TOMs are meant to facilitate collaborative astronomical observing
