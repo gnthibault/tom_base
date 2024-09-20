@@ -9,6 +9,136 @@
 [Documentation](https://tom-toolkit.readthedocs.io/en/latest/)
 ![logo](tom_common/static/tom_common/img/logo-color.png)
 
+## Customized notes from gnthibault
+When you arrive in the project, you need to use the following set of commands:
+
+```bash
+git clone git@github.com:gnthibault/tom_base.git
+git remote add upstream git@github.com:TOMToolkit/tom_base.git
+git fetch --all
+git checkout dev
+git pull upstream dev
+```
+
+Regularly, fetch updates from the remote:
+```bash
+git fetch --all
+git checkout dev
+git pull upstream dev
+# Then git rebase from your current dev branch, most likely gnthibault-dev
+```
+
+## Python install
+```bash
+brew install poetry
+pyenv install -v 3.11.7   # 3.12 and above do not work
+poetry env use python3.11 # creates virtualenv
+poetry install            # Will install all dependencies in your poetry virtual env
+```
+Now you want to follow the steps explained on https://tom-toolkit.readthedocs.io/en/latest/introduction/manual_installation.html
+in order to setup your "a la carte" tom based on django modular design.
+In particular:
+
+```bash
+poetry run django-admin startproject mytom
+```
+After that, you go and edit mytom/mytom/settings.py, and make sure you have a list similar to this one:
+INSTALLED_APPS = [
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+	"tom_setup"
+]
+Now you can run the tom_setup app, it will create a new TOM in the current project (this step is interactive):
+```bash
+cd mytom
+poetry run python manage.py tom_setup # Runs ...
+```
+
+Follow the instruction from the previous command, then the very last step is to perform the DB migration and run the actual real server locally, from the mytom directory
+
+```bash
+cd mytom
+poetry run python manage.py migrate # Actually apply the migrations generated at the makemigrations step
+poetry run python manage.py runserver # Runs ...
+```
+
+All subsequent step will consist in doing the following to run you tom:
+```bash
+cd ./mytom
+poetry run python manage.py runserver # Runs ...
+```
+
+
+## Install prerequisite for gcp deployment: Docker
+
+```bash
+  gcloud auth configure-docker europe-west1-docker.pkg.dev
+  docker pull europe-west1-docker.pkg.dev/tom-toolkit-dev-hxm/remote-observatory-tom-repo/tom-demo:test0
+```
+
+## Install prerequisite for gcp deployment: cloud sql
+
+First, edit the file at tom_base/mytom/.env with the following content, depending on wether you'd like to use 
+local sqlite db or the cloudsql remote db:
+```bash
+DATABASE_URL=sqlite:///db.sqlite3
+```
+
+Now if you want to develop with remote DB, based on local proxy, do the following:
+edit tom_base/mytom/.env:
+```bash
+DATABASE_URL=postgres://tom_toolkit:DB_PWD_XXX//cloudsql/YOUR_PROJECT_ID:europe-west1:CLOUD_SQL_INSTANCE_NAME/tom_toolkit
+GS_BUCKET_NAME=YOUR_GCS_BUCKET_NAME_FOR_TOM_TOOLKIT
+SECRET_KEY=$(cat /dev/urandom | LC_ALL=C tr -dc '[:alpha:]'| fold -w 50 | head -n1)
+```
+
+```bash
+# On mac
+curl -o cloud-sql-proxy https://storage.googleapis.com/cloud-sql-connectors/cloud-sql-proxy/v2.13.0/cloud-sql-proxy.darwin.amd64
+# On linux
+curl -o cloud-sql-proxy https://storage.googleapis.com/cloud-sql-connectors/cloud-sql-proxy/v2.13.0/cloud-sql-proxy.linux.amd64
+# Then
+chmod +x cloud-sql-proxy
+# Then run it with
+./cloud-sql-proxy $PROJECT_ID:$REGION:$INSTANCE_NAME
+#./cloud-sql-proxy --auto-iam-authn tom-toolkit-dev-hxm:europe-west1:tom-toolkit-instance-dev-ae78f371
+# brew install postgresql
+# psql "dbname=tom_toolkit host=127.0.0.1 user=XXX@XXXX.net"
+
+# configure
+export GOOGLE_CLOUD_PROJECT=YOUR_PROJECT_ID
+# export GOOGLE_CLOUD_PROJECT=tom-toolkit-dev-hxm
+export SETTINGS_NAME=YOUR=YOUR_SECRET_SETTINGS_NAME # default is set to django_settings, no need to specify if default
+export USE_CLOUD_SQL_AUTH_PROXY=true
+# Run the Django migrations to set up your models and assets:
+poetry run python manage.py --help
+poetry run python manage.py makemigrations
+poetry run python manage.py migrate
+poetry run python manage.py createsuperuser
+poetry run python manage.py collectstatic
+poetry run python manage.py runserver 8080
+# In your browser, go to http://localhost:8080
+
+# If you deploy manually with
+#
+# You can then run iap proxy
+# gcloud run services proxy tom-toolkit-instance-dev-b614bde8 --port=8080 --project=tom-toolkit-dev-hxm --region=europe-west1
+# And then reach-out to http://127.0.0.1:8080/
+```
+
+## Manual cloudrun deployment command set
+
+```bash
+  gcloud run deploy tom-toolkit-instance-dev-b614bde8 --image europe-west1-docker.pkg.dev/tom-toolkit-dev-hxm/remote-observatory-tom-repo/tom_app:test1 --update-labels ^,^managed-by=manual_deploy,commit-sha=XXXXXXXXXXXXXXX --format json --region europe-west1 --project tom-toolkit-dev-hxm
+  gcloud run services proxy tom-toolkit-instance-dev-b614bde8 --port=8080 --project=tom-toolkit-dev-hxm --region=europe-west1
+  cloud-sql-proxy --auto-iam-authn tom-toolkit-dev-hxm:europe-west1:tom-toolkit-instance-dev-ae78f371
+```
+
+## Rest of the original doc
 The TOM Toolkit is a web framework for building TOMs: Target and Observation
 Managers. TOMs are meant to facilitate collaborative astronomical observing
 projects. A typical TOM allows its users to curate target lists, request

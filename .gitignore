@@ -63,6 +63,8 @@ coverage.xml
 *.pot
 
 # Django stuff:
+_static
+mytom/.env
 *.log
 *local_settings.py
 
@@ -95,6 +97,9 @@ target/
 
 # pyenv
 .python-version
+
+# Google tools
+cloud-sql-proxy
 
 # celery beat schedule file
 celerybeat-schedule
