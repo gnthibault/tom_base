@@ -37,6 +37,8 @@ curl -o cloud-sql-proxy https://storage.googleapis.com/cloud-sql-connectors/clou
 curl -o cloud-sql-proxy https://storage.googleapis.com/cloud-sql-connectors/cloud-sql-proxy/v2.13.0/cloud-sql-proxy.linux.amd64
 # Then
 chmod +x cloud-sql-proxy
+# Then run with
+./cloud-sql-proxy $PROJECT_ID:$REGION:$INSTANCE_NAME
 ```
 
 ## Rest of the original doc
