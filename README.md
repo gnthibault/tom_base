@@ -28,6 +28,44 @@ git pull upstream dev
 # Then git rebase from your current dev branch, most likely gnthibault-dev
 ```
 
+## Python install
+```bash
+brew install poetry
+pyenv install -v 3.11.7 #3.12 and above do not work
+poetry env use python3.11 # creates virtualenv
+poetry install            # Will install all dependencies in your poetry virtual env
+```
+Now you want to follow the steps explained on https://tom-toolkit.readthedocs.io/en/latest/introduction/manual_installation.html
+in order to setup your "a la carte" tom based on django modular design.
+In particular:
+
+```bash
+poetry run django-admin startproject remote_observatory_tom .
+```
+After that, you go and edit remote_observatory/settings.py, and make sure you have a list similar to this one:
+INSTALLED_APPS = [
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    'tom_setup',
+]
+Now you can run the tom_setup app, it will create a new TOM in the current project (this step is interactive):
+```bash
+poetry run python manage.py tom_setup # Runs ...
+```
+
+The very last step is to perform the DB migration and run the actual real server locally
+
+```bash
+poetry run python manage.py migrate # Actually apply the migrations generated at the makemigrations step
+poetry run python manage.py runserver # Runs ...
+```
+
+
+
 ## Install prerequisite for gcp deployment
 
 ```bash
@@ -39,6 +77,15 @@ curl -o cloud-sql-proxy https://storage.googleapis.com/cloud-sql-connectors/clou
 chmod +x cloud-sql-proxy
 # Then run with
 ./cloud-sql-proxy $PROJECT_ID:$REGION:$INSTANCE_NAME
+# configure
+export GOOGLE_CLOUD_PROJECT=PROJECT_ID
+export USE_CLOUD_SQL_AUTH_PROXY=true
+# Run the Django migrations to set up your models and assets:
+python manage.py makemigrations
+python manage.py migrate
+python manage.py collectstatic
+python manage.py runserver 8080
+# In your browser, go to http://localhost:8080
 ```
 
 ## Rest of the original doc
