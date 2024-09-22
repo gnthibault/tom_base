@@ -40,30 +40,36 @@ in order to setup your "a la carte" tom based on django modular design.
 In particular:
 
 ```bash
-poetry run django-admin startproject remote_observatory_tom .
+poetry run django-admin startproject mytom
 ```
-After that, you go and edit remote_observatory/settings.py, and make sure you have a list similar to this one:
+After that, you go and edit mytom/mytom/settings.py, and make sure you have a list similar to this one:
 INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'tom_setup',
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+	"tom_setup"
 ]
 Now you can run the tom_setup app, it will create a new TOM in the current project (this step is interactive):
 ```bash
+cd mytom
 poetry run python manage.py tom_setup # Runs ...
 ```
 
-The very last step is to perform the DB migration and run the actual real server locally
+Follow the instruction from the previous command, then the very last step is to perform the DB migration and run the actual real server locally
 
 ```bash
 poetry run python manage.py migrate # Actually apply the migrations generated at the makemigrations step
 poetry run python manage.py runserver # Runs ...
 ```
 
+All subsequent step will consist in doing the following to run you tom:
+```bash
+cd ./mytom
+poetry run python manage.py runserver # Runs ...
+```
 
 
 ## Install prerequisite for gcp deployment
