@@ -58,7 +58,7 @@ cd mytom
 poetry run python manage.py tom_setup # Runs ...
 ```
 
-Follow the instruction from the previous command, then the very last step is to perform the DB migration and run the actual real server locally
+Follow the instruction from the previous command, then the very last step is to perform the DB migration and run the actual real server locally, from the mytom directory
 
 ```bash
 poetry run python manage.py migrate # Actually apply the migrations generated at the makemigrations step
