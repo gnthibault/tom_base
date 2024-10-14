@@ -31,7 +31,7 @@ git pull upstream dev
 ## Python install
 ```bash
 brew install poetry
-pyenv install -v 3.11.7 #3.12 and above do not work
+pyenv install -v 3.11.7   # 3.12 and above do not work
 poetry env use python3.11 # creates virtualenv
 poetry install            # Will install all dependencies in your poetry virtual env
 ```
@@ -84,7 +84,8 @@ chmod +x cloud-sql-proxy
 # Then run with
 ./cloud-sql-proxy $PROJECT_ID:$REGION:$INSTANCE_NAME
 # configure
-export GOOGLE_CLOUD_PROJECT=PROJECT_ID
+export GOOGLE_CLOUD_PROJECT=YOUR_PROJECT_ID
+export SETTINGS_NAME=YOUR=YOUR_SECRET_SETTINGS_NAME # default is set to django_settings, no need to specify if default
 export USE_CLOUD_SQL_AUTH_PROXY=true
 # Run the Django migrations to set up your models and assets:
 python manage.py makemigrations
