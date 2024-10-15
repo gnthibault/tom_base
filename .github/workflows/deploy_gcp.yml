@@ -1,7 +1,7 @@
 # This workflow will install Python dependencies, run tests and lint with a single version of Python
 # For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
-# The full GCP authentication setup is desribed in this nice blog post: https://cloud.google.com/blog/products/identity-security/enabling-keyless-authentication-from-github-actions
-
+# The full GCP authentication setup is described in this nice blog post: https://cloud.google.com/blog/products/identity-security/enabling-keyless-authentication-from-github-actions
+# As well as here: https://roger-that-dev.medium.com/push-code-with-github-actions-to-google-clouds-artifact-registry-60d256f8072f
 name: GCP app deployment
 
 on:
