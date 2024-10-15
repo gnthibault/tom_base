@@ -1,0 +1,111 @@
+# This workflow will install Python dependencies, run tests and lint with a single version of Python
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
+# The full GCP authentication setup is desribed in this nice blog post: https://cloud.google.com/blog/products/identity-security/enabling-keyless-authentication-from-github-actions
+
+name: GCP app deployment
+
+on:
+  push:
+    branches: [ dev, master ]
+#  pull_request:
+#    branches: [ master ]
+
+env:
+  IMAGE_NAME: ''
+  PROJECT_ID: ''
+  AR_REPO_LOCATION: ''
+  AR_URL: ''
+  SERVICE_ACCOUNT: ''
+  WORKLOAD_IDENTITY_PROVIDER: ''
+
+  jobs:
+    push_to_ar:
+      permissions:
+        contents: 'read'
+        id-token: 'write'
+
+      runs-on: ubuntu-latest
+      steps:
+        - name: Checkout
+          uses: actions/checkout@v2
+
+        - name: Google Auth
+          id: auth
+          uses: 'google-github-actions/auth@v2'
+          with:
+            token_format: 'access_token'
+            project_id: ${{ env.PROJECT_ID }}
+            service_account: ${{ env.SERVICE_ACCOUNT }}
+            workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
+
+        - name: Docker Auth
+          id: docker-auth
+          uses: 'docker/login-action@v1'
+          with:
+            username: 'oauth2accesstoken'
+            password: '${{ steps.auth.outputs.access_token }}'
+            registry: '${{ env.AR_REPO_LOCATION }}-docker.pkg.dev'
+
+        - name: Build and Push Container
+          run: |-
+            docker build -t "${{ env.AR_URL }}/${{ env.IMAGE_NAME }}:${{ github.sha }}" ./
+            docker push "${{ env.AR_URL }}/${{ env.IMAGE_NAME }}:${{ github.sha }}"
+
+#  deploy:
+#    steps:
+#      - id: auth
+#        uses: google-github-actions/auth@v0.4.0
+#        with:
+#          workload_identity_provider: 'projects/123456789/locations/global/workloadIdentityPools/my-pool/providers/my-provider'
+#          service_account: 'my-service-account@my-project.iam.gserviceaccount.com'
+
+#      - id: get-gke-credentials
+#        uses: google-github-actions/get-gke-credentials@v0.4.0
+#        with:
+#          cluster_name: my-cluster
+#          location: us-central1-a
+#
+#      - id: get-pods
+#        run: kubectl get pods
+#  build:
+#    runs-on: ubuntu-latest
+#    steps:
+#    - uses: actions/checkout@v3
+#    - uses: actions/setup-python@v4
+#      with:
+#        python-version: '3.8'
+#    - name: Install dependencies
+#      run: |
+#        sudo apt-get install libgraphviz-dev
+#        python -m pip install --upgrade pip
+#        pip install -r requirements.txt
+#    - name: Lint with flake8
+#      run: |
+#        pip install flake8
+#        # stop the build if there are Python syntax errors or undefined names
+#        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics --exclude .git,apps/*,documentation/*,dark_calibration/*,infrastructure/*,ReportEditor/*,reports_build/*,scripts/*,venv/*,conf_files/*
+#        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+#        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+#    - name: Install in dev mode
+#      run: |
+#        python setup.py develop
+#    - name: Test with pytest
+#      run: |
+#        pip install pytest
+#        python setup.py test
+#    - name: Prepare build latex reports
+#      run: |
+#         sudo apt-get install -y texlive-latex-recommended texlive-publishers texlive-bibtex-extra texlive-science
+#    - name: Build latex reports
+#      run: |
+#        python setup.py gen_report
+#    - name: Set failure state if needed
+#      if: failure()
+#      run: |
+#        echo "FAILURE"
+#
+#    - name: Publish pdf reports
+#      uses: actions/upload-artifact@v2
+#      with:
+#        path: documentation/papers/latex/*/*.pdf
+#
