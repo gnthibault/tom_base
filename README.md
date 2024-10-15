@@ -72,7 +72,14 @@ poetry run python manage.py runserver # Runs ...
 ```
 
 
-## Install prerequisite for gcp deployment
+## Install prerequisite for gcp deployment: Docker
+
+```bash
+  gcloud auth configure-docker europe-west1-docker.pkg.dev
+  docker pull europe-west1-docker.pkg.dev/tom-toolkit-dev-hxm/remote-observatory-tom-repo/tom-demo:test0
+```
+
+## Install prerequisite for gcp deployment: cloud sql
 
 ```bash
 # On mac
@@ -83,6 +90,7 @@ curl -o cloud-sql-proxy https://storage.googleapis.com/cloud-sql-connectors/clou
 chmod +x cloud-sql-proxy
 # Then run with
 ./cloud-sql-proxy $PROJECT_ID:$REGION:$INSTANCE_NAME
+#./cloud-sql-proxy tom-toolkit-dev-hxm:europe-west1:tom-toolkit-instance-dev-ae78f371
 # configure
 export GOOGLE_CLOUD_PROJECT=YOUR_PROJECT_ID
 export SETTINGS_NAME=YOUR=YOUR_SECRET_SETTINGS_NAME # default is set to django_settings, no need to specify if default
