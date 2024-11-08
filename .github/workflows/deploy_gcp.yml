@@ -1,14 +1,32 @@
 # This workflow will install Python dependencies, run tests and lint with a single version of Python
 # For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
 # The full GCP authentication setup is described in this nice blog post: https://cloud.google.com/blog/products/identity-security/enabling-keyless-authentication-from-github-actions
-# As well as here: https://roger-that-dev.medium.com/push-code-with-github-actions-to-google-clouds-artifact-registry-60d256f8072f
+# Here you see how to push to google cloud artifact registry: https://roger-that-dev.medium.com/push-code-with-github-actions-to-google-clouds-artifact-registry-60d256f8072f
+# Here you see how to deploy a cloudrun: https://github.com/google-github-actions/deploy-cloudrun
+# Or more generically, setup gcloud: https://github.com/google-github-actions/setup-gcloud
 name: GCP app deployment
 
 on:
   push:
-    branches: [ dev, master ]
+    branches: [ deployment/dev, deployment/prod ]
 #  pull_request:
 #    branches: [ master ]
+
+#virtualenv venv
+#source venv/bin/activate
+#pip install -r ./requirements.txt
+#
+#gcloud auth configure-docker     europe-west1-docker.pkg.dev
+#docker build -t europe-west1-docker.pkg.dev/tom-toolkit-dev-hxm/remote-observatory-tom-repo/tom_app .
+#OR
+#docker buildx build --platform linux/arm64/v8,linux/amd64 -t europe-west1-docker.pkg.dev/tom-toolkit-dev-hxm/remote-observatory-tom-repo/tom_app .
+#docker tag europe-west1-docker.pkg.dev/tom-toolkit-dev-hxm/remote-observatory-tom-repo/tom_app europe-west1-docker.pkg.dev/tom-toolkit-dev-hxm/remote-observatory-tom-repo/tom_app:test1
+#docker push europe-west1-docker.pkg.dev/tom-toolkit-dev-hxm/remote-observatory-tom-repo/tom_app:test1
+#docker run -it -e PORT=8080 -p 8080:8080 --rm europe-west1-docker.pkg.dev/tom-toolkit-dev-hxm/remote-observatory-tom-repo/tom_app:test
+## Cloudrun deployment
+#gcloud run services proxy tom-toolkit-instance-dev-b614bde8 --port=8080 --project=tom-toolkit-dev-hxm --region=europe-west1
+#Then go to http://localhost:8080
+
 
 env:
   IMAGE_NAME: ''
@@ -17,95 +35,57 @@ env:
   AR_URL: ''
   SERVICE_ACCOUNT: ''
   WORKLOAD_IDENTITY_PROVIDER: ''
+  CLOUDRUN_INSTANCE_NAME: ''
 
   jobs:
-    push_to_ar:
+    push_to_gcp_artifact_registry:
       permissions:
-        contents: 'read'
-        id-token: 'write'
+        id-token: write # This is required for requesting the JWT
+        contents: read  # This is required for actions/checkout
 
       runs-on: ubuntu-latest
       steps:
-        - name: Checkout
-          uses: actions/checkout@v2
-
-        - name: Google Auth
-          id: auth
+        - uses: 'actions/checkout@v4'
+        - id: auth
           uses: 'google-github-actions/auth@v2'
           with:
             token_format: 'access_token'
             project_id: ${{ env.PROJECT_ID }}
-            service_account: ${{ env.SERVICE_ACCOUNT }}
             workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
-
-        - name: Docker Auth
-          id: docker-auth
+            service_account: ${{ env.SERVICE_ACCOUNT }}
+        - id: 'docker-auth
           uses: 'docker/login-action@v1'
           with:
             username: 'oauth2accesstoken'
             password: '${{ steps.auth.outputs.access_token }}'
             registry: '${{ env.AR_REPO_LOCATION }}-docker.pkg.dev'
-
-        - name: Build and Push Container
+#        - id: 'Set up Cloud SDK'
+#          uses: 'google-github-actions/setup-gcloud@v2'
+#          with:
+#            version: '>= 363.0.0'
+        - id: 'build_and_push'
           run: |-
-            docker build -t "${{ env.AR_URL }}/${{ env.IMAGE_NAME }}:${{ github.sha }}" ./
-            docker push "${{ env.AR_URL }}/${{ env.IMAGE_NAME }}:${{ github.sha }}"
+            docker build -t ${{ env.AR_URL }}/{{ env.IMAGE_NAME }} .
+            docker tag ${{ env.AR_URL }}/{{ env.IMAGE_NAME }} ${{ env.AR_URL }}/{{ env.IMAGE_NAME }}:${{ github.sha }}
+            docker push ${{ env.AR_URL }}/{{ env.IMAGE_NAME }}:${{ github.sha }}
 
-#  deploy:
-#    steps:
-#      - id: auth
-#        uses: google-github-actions/auth@v0.4.0
-#        with:
-#          workload_identity_provider: 'projects/123456789/locations/global/workloadIdentityPools/my-pool/providers/my-provider'
-#          service_account: 'my-service-account@my-project.iam.gserviceaccount.com'
+    # Deploy comes from https://github.com/google-github-actions/deploy-cloudrun
+    deploy:
+      permissions:
+        contents: 'read'
+        id-token: 'write'
 
-#      - id: get-gke-credentials
-#        uses: google-github-actions/get-gke-credentials@v0.4.0
-#        with:
-#          cluster_name: my-cluster
-#          location: us-central1-a
-#
-#      - id: get-pods
-#        run: kubectl get pods
-#  build:
-#    runs-on: ubuntu-latest
-#    steps:
-#    - uses: actions/checkout@v3
-#    - uses: actions/setup-python@v4
-#      with:
-#        python-version: '3.8'
-#    - name: Install dependencies
-#      run: |
-#        sudo apt-get install libgraphviz-dev
-#        python -m pip install --upgrade pip
-#        pip install -r requirements.txt
-#    - name: Lint with flake8
-#      run: |
-#        pip install flake8
-#        # stop the build if there are Python syntax errors or undefined names
-#        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics --exclude .git,apps/*,documentation/*,dark_calibration/*,infrastructure/*,ReportEditor/*,reports_build/*,scripts/*,venv/*,conf_files/*
-#        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-#        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-#    - name: Install in dev mode
-#      run: |
-#        python setup.py develop
-#    - name: Test with pytest
-#      run: |
-#        pip install pytest
-#        python setup.py test
-#    - name: Prepare build latex reports
-#      run: |
-#         sudo apt-get install -y texlive-latex-recommended texlive-publishers texlive-bibtex-extra texlive-science
-#    - name: Build latex reports
-#      run: |
-#        python setup.py gen_report
-#    - name: Set failure state if needed
-#      if: failure()
-#      run: |
-#        echo "FAILURE"
-#
-#    - name: Publish pdf reports
-#      uses: actions/upload-artifact@v2
-#      with:
-#        path: documentation/papers/latex/*/*.pdf
-#
+      steps:
+        - uses: 'actions/checkout@v4'
+        - uses: 'google-github-actions/auth@v2'
+          with:
+            workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
+            service_account: ${{ env.SERVICE_ACCOUNT }}
+        - id: 'deploy'
+          uses: 'google-github-actions/deploy-cloudrun@v2'
+          with:
+            service: ${{ env.CLOUDRUN_INSTANCE_NAME }}
+            image: ${{ env.AR_URL }}/{{ env.IMAGE_NAME }}:${{ github.sha }}
+
+#        - name: 'Use output'
+#          run: 'curl "${{ steps.deploy.outputs.url }}"'
