@@ -49,8 +49,8 @@ jobs:
        || github.ref_name == 'deployment/prod' && 'prod' }}
     steps:
       - shell: bash
-#        env:
-#          SUPER_SECRET: ${{ secrets.SuperSecret }}
+        env:
+          WORKLOAD_IDENTITY_PROVIDER: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
         run: |
           echo "YOUR WIP is ${{ env.WORKLOAD_IDENTITY_PROVIDER }}"
 
