@@ -13,8 +13,11 @@ on:
 #  pull_request:
 #    branches: [ master ]
 
-env:
-  name: ${{ github.ref == 'refs/heads/deployment/dev' && 'dev' || github.ref == 'refs/heads/deployment/prod' && 'prod' }}
+environment: |-
+  ${{
+     github.ref_name == 'deployment/dev'  && 'dev'
+  || github.ref_name == 'deployment/prod' && 'prod'
+  }}
 
 
 #virtualenv venv
