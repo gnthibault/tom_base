@@ -48,11 +48,9 @@ jobs:
       ${{ github.ref_name == 'deployment/dev'  && 'dev'
        || github.ref_name == 'deployment/prod' && 'prod' }}
     steps:
-#      - shell: bash
-#        env:
-#          WORKLOAD_IDENTITY_PROVIDER: ${{ vars.WORKLOAD_IDENTITY_PROVIDER }}
-#        run: |
-#          echo "YOUR WIP is $WORKLOAD_IDENTITY_PROVIDER"
+      - shell: bash
+        run: |
+          echo "YOUR WIP is ${{ vars.AR_URL }}/{{ vars.IMAGE_NAME }}"
       - uses: 'actions/checkout@v4'
       - id: 'auth' # The exact debug procedure is described here: https://cloud.google.com/iam/docs/audit-logging/examples-workload-identity#exchange-federated
         uses: 'google-github-actions/auth@v2'
