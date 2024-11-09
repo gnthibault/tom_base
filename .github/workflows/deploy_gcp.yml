@@ -46,7 +46,7 @@ env:
       runs-on: ubuntu-latest
       steps:
         - uses: 'actions/checkout@v4'
-        - id: 'auth
+        - id: 'auth'
           uses: 'google-github-actions/auth@v2'
           with:
             token_format: 'access_token'
