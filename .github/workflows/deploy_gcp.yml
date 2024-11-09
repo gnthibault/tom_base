@@ -52,7 +52,7 @@ jobs:
 #        env:
 #          WORKLOAD_IDENTITY_PROVIDER: ${{ vars.WORKLOAD_IDENTITY_PROVIDER }}
 #        run: |
-#          echo "YOUR WIP is $WORKLOAD_IDENTITY_PROVIDER "
+#          echo "YOUR WIP is $WORKLOAD_IDENTITY_PROVIDER"
       - uses: 'actions/checkout@v4'
       - id: 'auth' # The exact debug procedure is described here: https://cloud.google.com/iam/docs/audit-logging/examples-workload-identity#exchange-federated
         uses: 'google-github-actions/auth@v2'
