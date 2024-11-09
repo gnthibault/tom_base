@@ -50,7 +50,7 @@ jobs:
     steps:
       - shell: bash
         run: |
-          echo "YOUR WIP is ${{ vars.AR_URL }}/{{ vars.IMAGE_NAME }}"
+          echo "YOUR WIP is ${{ vars.AR_URL }}/${{ vars.IMAGE_NAME }}"
       - uses: 'actions/checkout@v4'
       - id: 'auth' # The exact debug procedure is described here: https://cloud.google.com/iam/docs/audit-logging/examples-workload-identity#exchange-federated
         uses: 'google-github-actions/auth@v2'
@@ -71,10 +71,10 @@ jobs:
 #            version: '>= 363.0.0'
       - id: 'build_and_push'
         run: |-
-          docker buildx build --platform linux/arm64/v8,linux/amd64 -t ${{ vars.AR_URL }}/{{ vars.IMAGE_NAME }} .
-          docker tag ${{ vars.AR_URL }}/{{ vars.IMAGE_NAME }} ${{ vars.AR_URL }}/{{ vars.IMAGE_NAME }}:${{ github.sha }}
+          docker buildx build --platform linux/arm64/v8,linux/amd64 -t ${{ vars.AR_URL }}/${{ vars.IMAGE_NAME }} .
+          docker tag ${{ vars.AR_URL }}/${{ vars.IMAGE_NAME }} ${{ vars.AR_URL }}/${{ vars.IMAGE_NAME }}:${{ github.sha }}
           gcloud auth configure-docker ${{ vars.AR_REPO_LOCATION }}-docker.pkg.dev
-          docker push ${{ vars.AR_URL }}/{{ vars.IMAGE_NAME }}:${{ github.sha }}
+          docker push ${{ vars.AR_URL }}/${{ vars.IMAGE_NAME }}:${{ github.sha }}
 
   # Deploy comes from https://github.com/google-github-actions/deploy-cloudrun
   deploy:
@@ -95,7 +95,7 @@ jobs:
         uses: 'google-github-actions/deploy-cloudrun@v2'
         with:
           service: ${{ vars.CLOUDRUN_INSTANCE_NAME }}
-          image: ${{ vars.AR_URL }}/{{ vars.IMAGE_NAME }}:${{ github.sha }}
+          image: ${{ vars.AR_URL }}/${{ vars.IMAGE_NAME }}:${{ github.sha }}
 
 #        - name: 'Use output'
 #          run: 'curl "${{ steps.deploy.outputs.url }}"'
