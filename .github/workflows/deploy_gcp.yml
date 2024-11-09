@@ -28,14 +28,14 @@ on:
 #Then go to http://localhost:8080
 
 
-env:
-  IMAGE_NAME: ''
-  PROJECT_ID: ''
-  AR_REPO_LOCATION: ''
-  AR_URL: ''
-  SERVICE_ACCOUNT: ''
-  WORKLOAD_IDENTITY_PROVIDER: ''
-  CLOUDRUN_INSTANCE_NAME: ''
+#env:
+#  IMAGE_NAME: ''
+#  PROJECT_ID: ''
+#  AR_REPO_LOCATION: ''
+#  AR_URL: ''
+#  SERVICE_ACCOUNT: ''
+#  WORKLOAD_IDENTITY_PROVIDER: ''
+#  CLOUDRUN_INSTANCE_NAME: ''
 
 jobs:
   push_to_gcp_artifact_registry:
