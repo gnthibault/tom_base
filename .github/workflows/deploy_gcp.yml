@@ -53,7 +53,6 @@ jobs:
           WORKLOAD_IDENTITY_PROVIDER: ${{ vars.WORKLOAD_IDENTITY_PROVIDER }}
         run: |
           echo "YOUR WIP is $WORKLOAD_IDENTITY_PROVIDER"
-
       - uses: 'actions/checkout@v4'
       - id: 'auth'
         uses: 'google-github-actions/auth@v2'
