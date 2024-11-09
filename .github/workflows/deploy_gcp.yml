@@ -13,13 +13,6 @@ on:
 #  pull_request:
 #    branches: [ master ]
 
-environment: |-
-  ${{
-     github.ref_name == 'deployment/dev'  && 'dev'
-  || github.ref_name == 'deployment/prod' && 'prod'
-  }}
-
-
 #virtualenv venv
 #source venv/bin/activate
 #pip install -r ./requirements.txt
@@ -51,6 +44,9 @@ jobs:
       id-token: write # This is required for requesting the JWT
       contents: read  # This is required for actions/checkout
     runs-on: ubuntu-latest
+    environment: |-
+      ${{ github.ref_name == 'deployment/dev'  && 'dev'
+       || github.ref_name == 'deployment/prod' && 'prod' }}
     steps:
       - uses: 'actions/checkout@v4'
       - id: 'auth'
@@ -83,6 +79,9 @@ jobs:
       contents: 'read'
       id-token: 'write'
     runs-on: ubuntu-latest
+    environment: |-
+      ${{ github.ref_name == 'deployment/dev'  && 'dev'
+       || github.ref_name == 'deployment/prod' && 'prod' }}
     steps:
       - uses: 'actions/checkout@v4'
       - uses: 'google-github-actions/auth@v2'
