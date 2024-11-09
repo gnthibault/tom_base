@@ -37,55 +37,55 @@ env:
   WORKLOAD_IDENTITY_PROVIDER: ''
   CLOUDRUN_INSTANCE_NAME: ''
 
-  jobs:
-    push_to_gcp_artifact_registry:
-      permissions:
-        id-token: write # This is required for requesting the JWT
-        contents: read  # This is required for actions/checkout
+jobs:
+  push_to_gcp_artifact_registry:
+    permissions:
+      id-token: write # This is required for requesting the JWT
+      contents: read  # This is required for actions/checkout
 
-      runs-on: ubuntu-latest
-      steps:
-        - uses: 'actions/checkout@v4'
-        - id: 'auth'
-          uses: 'google-github-actions/auth@v2'
-          with:
-            token_format: 'access_token'
-            project_id: ${{ env.PROJECT_ID }}
-            workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
-            service_account: ${{ env.SERVICE_ACCOUNT }}
-        - id: 'docker-auth'
-          uses: 'docker/login-action@v1'
-          with:
-            username: 'oauth2accesstoken'
-            password: '${{ steps.auth.outputs.access_token }}'
-            registry: '${{ env.AR_REPO_LOCATION }}-docker.pkg.dev'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: 'actions/checkout@v4'
+      - id: 'auth'
+        uses: 'google-github-actions/auth@v2'
+        with:
+          token_format: 'access_token'
+          project_id: ${{ env.PROJECT_ID }}
+          workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.SERVICE_ACCOUNT }}
+      - id: 'docker-auth'
+        uses: 'docker/login-action@v1'
+        with:
+          username: 'oauth2accesstoken'
+          password: '${{ steps.auth.outputs.access_token }}'
+          registry: '${{ env.AR_REPO_LOCATION }}-docker.pkg.dev'
 #        - id: 'Set up Cloud SDK'
 #          uses: 'google-github-actions/setup-gcloud@v2'
 #          with:
 #            version: '>= 363.0.0'
-        - id: 'build_and_push'
-          run: |-
-            docker build -t ${{ env.AR_URL }}/{{ env.IMAGE_NAME }} .
-            docker tag ${{ env.AR_URL }}/{{ env.IMAGE_NAME }} ${{ env.AR_URL }}/{{ env.IMAGE_NAME }}:${{ github.sha }}
-            docker push ${{ env.AR_URL }}/{{ env.IMAGE_NAME }}:${{ github.sha }}
+      - id: 'build_and_push'
+        run: |-
+          docker build -t ${{ env.AR_URL }}/{{ env.IMAGE_NAME }} .
+          docker tag ${{ env.AR_URL }}/{{ env.IMAGE_NAME }} ${{ env.AR_URL }}/{{ env.IMAGE_NAME }}:${{ github.sha }}
+          docker push ${{ env.AR_URL }}/{{ env.IMAGE_NAME }}:${{ github.sha }}
 
-    # Deploy comes from https://github.com/google-github-actions/deploy-cloudrun
-    deploy:
-      permissions:
-        contents: 'read'
-        id-token: 'write'
+  # Deploy comes from https://github.com/google-github-actions/deploy-cloudrun
+  deploy:
+    permissions:
+      contents: 'read'
+      id-token: 'write'
 
-      steps:
-        - uses: 'actions/checkout@v4'
-        - uses: 'google-github-actions/auth@v2'
-          with:
-            workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
-            service_account: ${{ env.SERVICE_ACCOUNT }}
-        - id: 'deploy'
-          uses: 'google-github-actions/deploy-cloudrun@v2'
-          with:
-            service: ${{ env.CLOUDRUN_INSTANCE_NAME }}
-            image: ${{ env.AR_URL }}/{{ env.IMAGE_NAME }}:${{ github.sha }}
+    steps:
+      - uses: 'actions/checkout@v4'
+      - uses: 'google-github-actions/auth@v2'
+        with:
+          workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.SERVICE_ACCOUNT }}
+      - id: 'deploy'
+        uses: 'google-github-actions/deploy-cloudrun@v2'
+        with:
+          service: ${{ env.CLOUDRUN_INSTANCE_NAME }}
+          image: ${{ env.AR_URL }}/{{ env.IMAGE_NAME }}:${{ github.sha }}
 
 #        - name: 'Use output'
 #          run: 'curl "${{ steps.deploy.outputs.url }}"'
