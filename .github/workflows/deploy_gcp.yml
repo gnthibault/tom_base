@@ -9,7 +9,7 @@ name: GCP app deployment
 
 on:
   push:
-    branches: [ deployment/dev, deployment/prod ]
+    branches: [ deployment/dev, deployment/prd ]
 #  pull_request:
 #    branches: [ master ]
 
@@ -46,7 +46,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: |-
       ${{ github.ref_name == 'deployment/dev'  && 'dev'
-       || github.ref_name == 'deployment/prod' && 'prod' }}
+       || github.ref_name == 'deployment/prd'  && 'prd' }}
     steps:
 #      - shell: bash
 #        run: |
@@ -86,7 +86,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: |-
       ${{ github.ref_name == 'deployment/dev'  && 'dev'
-       || github.ref_name == 'deployment/prod' && 'prod' }}
+       || github.ref_name == 'deployment/prd'  && 'prd' }}
     steps:
       - uses: 'actions/checkout@v4'
       - uses: 'google-github-actions/auth@v2'
