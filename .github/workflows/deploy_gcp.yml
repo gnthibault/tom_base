@@ -6,11 +6,16 @@
 # Or more generically, setup gcloud: https://github.com/google-github-actions/setup-gcloud
 name: GCP app deployment
 
+
 on:
   push:
     branches: [ deployment/dev, deployment/prod ]
 #  pull_request:
 #    branches: [ master ]
+
+env:
+  name: ${{ github.ref == 'refs/heads/deployment/dev' && 'dev' || github.ref == 'refs/heads/deployment/prod' && 'prod' }}
+
 
 #virtualenv venv
 #source venv/bin/activate
@@ -48,10 +53,8 @@ jobs:
       - id: 'auth'
         uses: 'google-github-actions/auth@v2'
         with:
-#          token_format: 'access_token'
           project_id: ${{ env.PROJECT_ID }}
           workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
-#          service_account: ${{ env.SERVICE_ACCOUNT }}
 
 #      - id: 'docker-auth'
 #        uses: 'docker/login-action@v3'
