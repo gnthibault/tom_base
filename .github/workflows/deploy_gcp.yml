@@ -52,7 +52,6 @@ jobs:
           project_id: ${{ env.PROJECT_ID }}
           workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ env.SERVICE_ACCOUNT }}
-        run: gcloud auth configure-docker ${{ env.AR_REPO_LOCATION }}-docker.pkg.dev
 
 #      - id: 'docker-auth'
 #        uses: 'docker/login-action@v3'
@@ -69,6 +68,7 @@ jobs:
         run: |-
           docker build -t ${{ env.AR_URL }}/{{ env.IMAGE_NAME }} .
           docker tag ${{ env.AR_URL }}/{{ env.IMAGE_NAME }} ${{ env.AR_URL }}/{{ env.IMAGE_NAME }}:${{ github.sha }}
+          gcloud auth configure-docker ${{ env.AR_REPO_LOCATION }}-docker.pkg.dev
           docker push ${{ env.AR_URL }}/{{ env.IMAGE_NAME }}:${{ github.sha }}
 
   # Deploy comes from https://github.com/google-github-actions/deploy-cloudrun
