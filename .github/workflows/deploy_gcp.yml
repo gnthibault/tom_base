@@ -48,9 +48,9 @@ jobs:
       ${{ github.ref_name == 'deployment/dev'  && 'dev'
        || github.ref_name == 'deployment/prod' && 'prod' }}
     steps:
-      - shell: bash
-        run: |
-          echo "YOUR WIP is ${{ vars.AR_URL }}/${{ vars.IMAGE_NAME }}"
+#      - shell: bash
+#        run: |
+#          echo "YOUR WIP is ${{ vars.AR_URL }}/${{ vars.IMAGE_NAME }}"
       - uses: 'actions/checkout@v4'
       - id: 'auth' # The exact debug procedure is described here: https://cloud.google.com/iam/docs/audit-logging/examples-workload-identity#exchange-federated
         uses: 'google-github-actions/auth@v2'
@@ -58,12 +58,12 @@ jobs:
           project_id: ${{ vars.PROJECT_ID }}
           workload_identity_provider: ${{ vars.WORKLOAD_IDENTITY_PROVIDER }}
 
-#      - id: 'docker-auth'
-#        uses: 'docker/login-action@v3'
-#        with:
-#          username: 'oauth2accesstoken'
-#          password: '${{ steps.auth.outputs.access_token }}'
-#          registry: '${{ vars.AR_REPO_LOCATION }}-docker.pkg.dev'
+      - id: 'docker-auth'
+        uses: 'docker/login-action@v3'
+        with:
+          username: 'oauth2accesstoken'
+          password: '${{ steps.auth.outputs.access_token }}'
+          registry: '${{ vars.AR_REPO_LOCATION }}-docker.pkg.dev'
 
 #        - id: 'Set up Cloud SDK'
 #          uses: 'google-github-actions/setup-gcloud@v2'
@@ -73,7 +73,7 @@ jobs:
         run: |-
           docker buildx build --platform linux/amd64 -t ${{ vars.AR_URL }}/${{ vars.IMAGE_NAME }} .
           docker tag ${{ vars.AR_URL }}/${{ vars.IMAGE_NAME }} ${{ vars.AR_URL }}/${{ vars.IMAGE_NAME }}:${{ github.sha }}
-          gcloud auth configure-docker ${{ vars.AR_REPO_LOCATION }}-docker.pkg.dev
+          #gcloud auth configure-docker ${{ vars.AR_REPO_LOCATION }}-docker.pkg.dev
           docker push ${{ vars.AR_URL }}/${{ vars.IMAGE_NAME }}:${{ github.sha }}
 
   # Deploy comes from https://github.com/google-github-actions/deploy-cloudrun
