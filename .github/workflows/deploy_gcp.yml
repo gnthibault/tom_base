@@ -100,6 +100,8 @@ jobs:
         with:
           service: ${{ vars.CLOUDRUN_INSTANCE_NAME }}
           image: ${{ vars.AR_URL }}/${{ vars.IMAGE_NAME }}:${{ github.sha }}
+          project_id: ${{ vars.PROJECT_ID }}
+          region: ${{ AR_REPO_LOCATION }}
           env_vars_update_strategy: merge # will be changed from terraform
 #          env_vars: |-
 #            FRUIT=apple
