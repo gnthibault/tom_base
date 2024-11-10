@@ -98,6 +98,14 @@ jobs:
         with:
           service: ${{ vars.CLOUDRUN_INSTANCE_NAME }}
           image: ${{ vars.AR_URL }}/${{ vars.IMAGE_NAME }}:${{ github.sha }}
+          env_vars_update_strategy: merge # will be changed from terraform
+#          env_vars: |-
+#            FRUIT=apple
+#            SENTENCE=" this will retain leading and trailing spaces "
+#         env_vars_file:
+          secrets_update_strategy: merge
+
+
 
 #        - name: 'Use output'
 #          run: 'curl "${{ steps.deploy.outputs.url }}"'
