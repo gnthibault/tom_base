@@ -103,7 +103,7 @@ jobs:
           env_vars_update_strategy: merge # will be changed from terraform
 #          env_vars: |-
 #            FRUIT=apple
-#            SENTENCE=" this will retain leading and trailing spaces "
+#            SENTENCE=" this will retain leading and trailing  spaces "
 #         env_vars_file:
           secrets_update_strategy: merge # will be changed from terraform
 
