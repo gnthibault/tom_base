@@ -76,25 +76,7 @@ jobs:
           docker tag ${{ vars.AR_URL }}/${{ vars.IMAGE_NAME }} ${{ vars.AR_URL }}/${{ vars.IMAGE_NAME }}:${{ github.sha }}
           #gcloud auth configure-docker ${{ vars.AR_REPO_LOCATION }}-docker.pkg.dev
           docker push ${{ vars.AR_URL }}/${{ vars.IMAGE_NAME }}:${{ github.sha }}
-
-  # Deploy comes from https://github.com/google-github-actions/deploy-cloudrun
-  deploy:
-    permissions:
-      contents: 'read'
-      id-token: 'write'
-    runs-on: ubuntu-latest
-    environment: |-
-      ${{ github.ref_name == 'deployment/dev'  && 'dev'
-       || github.ref_name == 'deployment/prd'  && 'prd' }}
-    steps:
-      - uses: 'actions/checkout@v4'
-      - id: 'auth' # The exact debug procedure is described here: https://cloud.google.com/iam/docs/audit-logging/examples-workload-identity#exchange-federated
-        uses: 'google-github-actions/auth@v2'
-        with:
-          token_format: access_token
-          project_id: ${{ vars.PROJECT_ID }}
-          workload_identity_provider: ${{ vars.WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: ${{ vars.SERVICE_ACCOUNT }}
+      # Deploy comes from https://github.com/google-github-actions/deploy-cloudrun
       - id: 'deploy'
         uses: 'google-github-actions/deploy-cloudrun@v2'
         with:
@@ -108,8 +90,6 @@ jobs:
 #            SENTENCE=" this will retain leading and trailing spaces "
 #         env_vars_file:
           secrets_update_strategy: merge # will be changed from terraform
-
-
 
 #        - name: 'Use output'
 #          run: 'curl "${{ steps.deploy.outputs.url }}"'
