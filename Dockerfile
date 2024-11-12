@@ -4,9 +4,9 @@ FROM python:3.11
 #ENTRYPOINT [ "/usr/local/bin/gunicorn", "tom_demo_base.wsgi", "-b", "0.0.0.0:80", "--access-logfile", "-", "--error-logfile", "-", "-k", "gevent", "--timeout", "300", "--workers", "2"]
 
 ARG PORT=8000
-ARG GOOGLE_CLOUD_PROJECT="tom-toolkit-dev-hxm"
-
-ENV GOOGLE_CLOUD_PROJECT=$GOOGLE_CLOUD_PROJECT
+# ARG GOOGLE_CLOUD_PROJECT="tom-toolkit-dev-hxm"
+#
+# ENV GOOGLE_CLOUD_PROJECT=$GOOGLE_CLOUD_PROJECT
 ENV PORT=$PORT
 EXPOSE ${PORT}
 
