@@ -72,7 +72,7 @@ jobs:
 #            version: '>= 363.0.0'
       - id: 'build_and_push'
         run: |-
-          docker buildx build --platform linux/amd64 GOOGLE_CLOUD_PROJECT="tom-toolkit-dev-hxm" -t ${{ vars.AR_URL }}/${{ vars.IMAGE_NAME }} .
+          docker buildx build --platform linux/amd64 -t ${{ vars.AR_URL }}/${{ vars.IMAGE_NAME }} .
           docker tag ${{ vars.AR_URL }}/${{ vars.IMAGE_NAME }} ${{ vars.AR_URL }}/${{ vars.IMAGE_NAME }}:${{ github.sha }}
           #gcloud auth configure-docker ${{ vars.AR_REPO_LOCATION }}-docker.pkg.dev
           docker push ${{ vars.AR_URL }}/${{ vars.IMAGE_NAME }}:${{ github.sha }}
