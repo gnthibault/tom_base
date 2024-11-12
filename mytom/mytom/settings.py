@@ -14,6 +14,9 @@ import logging.config
 import os
 import tempfile
 
+# Django
+import django.db
+
 # Google deployment
 import environ
 import google
@@ -221,6 +224,25 @@ elif os.environ.get("GOOGLE_CLOUD_PROJECT", None):
     env.read_env(io.StringIO(payload))
 else:
     raise Exception("No local .env or GOOGLE_CLOUD_PROJECT detected. No secrets found.")
+
+# Use django-environ to parse the connection string
+DATABASES = {"default": env.db()}
+# If the flag as been set, configure to use proxy
+if os.getenv("USE_CLOUD_SQL_AUTH_PROXY", None):
+    DATABASES["default"]["HOST"] = "127.0.0.1"
+    DATABASES["default"]["PORT"] = 5432
+django.db.connection.ensure_connection()
+
+GS_BUCKET_NAME = env("GS_BUCKET_NAME")
+STORAGES = {
+    "default": {
+        "BACKEND": "storages.backends.gcloud.GoogleCloudStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "storages.backends.gcloud.GoogleCloudStorage",
+    },
+}
+GS_DEFAULT_ACL = "publicRead"
 
 
 # TOM Specific configuration
