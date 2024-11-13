@@ -90,7 +90,10 @@ curl -o cloud-sql-proxy https://storage.googleapis.com/cloud-sql-connectors/clou
 chmod +x cloud-sql-proxy
 # Then run with
 ./cloud-sql-proxy $PROJECT_ID:$REGION:$INSTANCE_NAME
-#./cloud-sql-proxy tom-toolkit-dev-hxm:europe-west1:tom-toolkit-instance-dev-ae78f371
+#./cloud-sql-proxy --auto-iam-authn tom-toolkit-dev-hxm:europe-west1:tom-toolkit-instance-dev-ae78f371
+# brew install postgresql
+# psql "dbname=tom_toolkit host=127.0.0.1 user=XXX@XXXX.net"
+
 # configure
 export GOOGLE_CLOUD_PROJECT=YOUR_PROJECT_ID
 # export GOOGLE_CLOUD_PROJECT=tom-toolkit-dev-hxm
