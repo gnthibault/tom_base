@@ -106,6 +106,20 @@ poetry run python manage.py migrate
 poetry run python manage.py collectstatic
 poetry run python manage.py runserver 8080
 # In your browser, go to http://localhost:8080
+
+# If you deploy manually with
+#
+# You can then run iap proxy
+# gcloud run services proxy tom-toolkit-instance-dev-b614bde8 --port=8080 --project=tom-toolkit-dev-hxm --region=europe-west1
+# And then reach-out to http://127.0.0.1:8080/
+```
+
+## Manual cloudrun deployment command set
+
+```bash
+  gcloud run deploy tom-toolkit-instance-dev-b614bde8 --image europe-west1-docker.pkg.dev/tom-toolkit-dev-hxm/remote-observatory-tom-repo/tom_app:test1 --update-labels ^,^managed-by=manual_deploy,commit-sha=XXXXXXXXXXXXXXX --format json --region europe-west1 --project tom-toolkit-dev-hxm
+  gcloud run services proxy tom-toolkit-instance-dev-b614bde8 --port=8080 --project=tom-toolkit-dev-hxm --region=europe-west1
+  cloud-sql-proxy --auto-iam-authn tom-toolkit-dev-hxm:europe-west1:tom-toolkit-instance-dev-ae78f371
 ```
 
 ## Rest of the original doc
