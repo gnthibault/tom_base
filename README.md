@@ -100,6 +100,7 @@ export GOOGLE_CLOUD_PROJECT=YOUR_PROJECT_ID
 export SETTINGS_NAME=YOUR=YOUR_SECRET_SETTINGS_NAME # default is set to django_settings, no need to specify if default
 export USE_CLOUD_SQL_AUTH_PROXY=true
 # Run the Django migrations to set up your models and assets:
+poetry run python manage.py --help
 poetry run python manage.py makemigrations
 poetry run python manage.py createsuperuser
 poetry run python manage.py migrate

@@ -231,7 +231,7 @@ DATABASES = {"default": env.db()}
 if os.getenv("USE_CLOUD_SQL_AUTH_PROXY", None):
     DATABASES["default"]["HOST"] = "127.0.0.1"
     DATABASES["default"]["PORT"] = 5432
-django.db.connection.ensure_connection()
+# django.db.connection.ensure_connection()
 
 GS_BUCKET_NAME = env("GS_BUCKET_NAME")
 STORAGES = {
