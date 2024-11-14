@@ -50,7 +50,7 @@ CMD exec gunicorn --bind :$PORT --workers 1 --threads 8 --timeout 0 mytom.wsgi:a
 # docker push europe-west1-docker.pkg.dev/tom-toolkit-dev-hxm/remote-observatory-tom-repo/tom_app:test
 # docker run -it -e PORT=8080 -p 8080:8080 --rm europe-west1-docker.pkg.dev/tom-toolkit-dev-hxm/remote-observatory-tom-repo/tom_app:test
 
-## Cloudrun deployment
+## Cloudrun deployment sample
 # gcloud run deploy tom-toolkit-instance-dev-b614bde8 --image europe-west1-docker.pkg.dev/tom-toolkit-dev-hxm/remote-observatory-tom-repo/tom_app:test1 --update-labels ^,^managed-by=manual_deploy,commit-sha=XXXXXXXXXXXXXXX --format json --region europe-west1 --project tom-toolkit-dev-hxm
 # gcloud run services proxy tom-toolkit-instance-dev-b614bde8 --port=8080 --project=tom-toolkit-dev-hxm --region=europe-west1
 # cloud-sql-proxy --auto-iam-authn tom-toolkit-dev-hxm:europe-west1:tom-toolkit-instance-dev-ae78f371
