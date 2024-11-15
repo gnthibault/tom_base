@@ -37,9 +37,9 @@ SECRET_KEY = 'qmy$h3u(+r@!zcbuxc&amp;s6)4i8l_9and&amp;fxcz069&amp;60ny^!1p*^'
 DEBUG = True
 
 ALLOWED_HOSTS = ['*']
-CSRF_TRUSTED_ORIGINS = ['*']
-CSRF_ALLOWED_ORIGINS = ['*']
-CORS_ORIGINS_WHITELIST = ['*']
+# CSRF_TRUSTED_ORIGINS = ['*']
+# CSRF_ALLOWED_ORIGINS = ['*']
+# CORS_ORIGINS_WHITELIST = ['*']
 
 
 # Application definition
@@ -319,7 +319,7 @@ TOM_ALERT_CLASSES = [
     'tom_alerts.brokers.gaia.GaiaBroker',
     'tom_alerts.brokers.lasair.LasairBroker',
     'tom_alerts.brokers.tns.TNSBroker',
-    #  'tom_alerts.brokers.fink.FinkBroker',
+    'tom_alerts.brokers.fink.FinkBroker',
 ]
 
 BROKERS = {

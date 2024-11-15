@@ -102,8 +102,8 @@ export USE_CLOUD_SQL_AUTH_PROXY=true
 # Run the Django migrations to set up your models and assets:
 poetry run python manage.py --help
 poetry run python manage.py makemigrations
-poetry run python manage.py createsuperuser
 poetry run python manage.py migrate
+poetry run python manage.py createsuperuser
 poetry run python manage.py collectstatic
 poetry run python manage.py runserver 8080
 # In your browser, go to http://localhost:8080
