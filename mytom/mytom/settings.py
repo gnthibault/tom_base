@@ -37,6 +37,9 @@ SECRET_KEY = 'qmy$h3u(+r@!zcbuxc&amp;s6)4i8l_9and&amp;fxcz069&amp;60ny^!1p*^'
 DEBUG = True
 
 ALLOWED_HOSTS = ['*']
+CSRF_TRUSTED_ORIGINS = ['*']
+CSRF_ALLOWED_ORIGINS = ['*']
+CORS_ORIGINS_WHITELIST = ['*']
 
 
 # Application definition
