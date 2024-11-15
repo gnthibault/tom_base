@@ -208,7 +208,7 @@ CACHES = {
 # Change this to "False" when you are ready for production
 env = environ.Env(DEBUG=(bool, False))
 env_file = os.path.join(BASE_DIR, ".env")
-
+logger = logging.getLogger(__name__)
 # Attempt to load the Project ID into the environment, safely failing on error.
 try:
     _, os.environ["GOOGLE_CLOUD_PROJECT"] = google.auth.default()
@@ -225,7 +225,7 @@ elif os.environ.get("GOOGLE_CLOUD_PROJECT", None):
     name = f"projects/{project_id}/secrets/{settings_name}/versions/latest"
     payload = client.access_secret_version(name=name).payload.data.decode("UTF-8")
     env.read_env(io.StringIO(payload))
-    print(f"env is {env}")
+    logger.info(f'env is {env}')
 else:
     raise Exception("No local .env or GOOGLE_CLOUD_PROJECT detected. No secrets found.")
 
@@ -235,7 +235,7 @@ DATABASES = {"default": env.db()}
 if os.getenv("USE_CLOUD_SQL_AUTH_PROXY", None):
     DATABASES["default"]["HOST"] = "127.0.0.1"
     DATABASES["default"]["PORT"] = 5432
-print(f"Database is {DATABASES}")
+logger.info(f'Database is {DATABASES}')
 # django.db.connection.ensure_connection()
 
 GS_BUCKET_NAME = env("GS_BUCKET_NAME")
