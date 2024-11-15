@@ -37,6 +37,7 @@ CMD exec gunicorn --bind :$PORT --workers 1 --threads 8 --timeout 0 mytom.wsgi:a
 #CMD exec gunicorn --bind :$PORT --workers 1 --threads 8 --timeout 0 main:app
 
 # gcloud auth login --update-adc
+# gcloud auth configure-docker europe-west1-docker.pkg.dev
 # echo "$(gcloud --project tom-toolkit-dev-hxm secrets versions access latest --secret django_settings)" > .env
 # docker buildx build --build-arg GOOGLE_CLOUD_PROJECT="tom-toolkit-dev-hxm" --build-arg SETTINGS_NAME=django_settings -t europe-west1-docker.pkg.dev/tom-toolkit-dev-hxm/remote-observatory-tom-repo/tom_app .
 # docker buildx build -t europe-west1-docker.pkg.dev/tom-toolkit-dev-hxm/remote-observatory-tom-repo/tom_app .
