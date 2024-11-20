@@ -38,7 +38,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
-CSRF_TRUSTED_ORIGINS = ['http://*', 'https://*']
+# CSRF_TRUSTED_ORIGINS = ['http://*', 'https://*']
 # CSRF_TRUSTED_ORIGINS = ['*']
 # CSRF_ALLOWED_ORIGINS = ['*']
 # CORS_ORIGINS_WHITELIST = ['*']
