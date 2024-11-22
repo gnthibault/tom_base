@@ -73,10 +73,11 @@ jobs:
 #            version: '>= 363.0.0'
       - id: 'build_and_push'
         run: |-
-          docker buildx build --platform linux/amd64 -t ${{ vars.AR_URL }}/${{ vars.IMAGE_NAME }} .
-          docker tag ${{ vars.AR_URL }}/${{ vars.IMAGE_NAME }} ${{ vars.AR_URL }}/${{ vars.IMAGE_NAME }}:${{ github.sha }}
-          #gcloud auth configure-docker ${{ vars.AR_REPO_LOCATION }}-docker.pkg.dev
-          docker push ${{ vars.AR_URL }}/${{ vars.IMAGE_NAME }}:${{ github.sha }}
+          echo "skip"
+#          docker buildx build --platform linux/amd64 -t ${{ vars.AR_URL }}/${{ vars.IMAGE_NAME }} .
+#          docker tag ${{ vars.AR_URL }}/${{ vars.IMAGE_NAME }} ${{ vars.AR_URL }}/${{ vars.IMAGE_NAME }}:${{ github.sha }}
+#          #gcloud auth configure-docker ${{ vars.AR_REPO_LOCATION }}-docker.pkg.dev
+#          docker push ${{ vars.AR_URL }}/${{ vars.IMAGE_NAME }}:${{ github.sha }}
       - id: 'setup_python'
         uses: actions/setup-python@v2
         with:
@@ -88,8 +89,8 @@ jobs:
           poetry install
       - id: 'migrate_db'
         run: |-
-          curl -o cloud-sql-proxy https://storage.googleapis.com/cloud-sql-connectors/cloud-sql-proxy/v2.13.0/cloud-sql-proxy.linux.amd64
-          chmod +x cloud-sql-proxy
+          curl -o ./cloud-sql-proxy https://storage.googleapis.com/cloud-sql-connectors/cloud-sql-proxy/v2.13.0/cloud-sql-proxy.linux.amd64
+          chmod +x ./cloud-sql-proxy
           cloud-sql-proxy --auto-iam-authn ${{ vars.PROJECT_ID }}:${{ vars.CLOUDSQL_LOCATION }}:${{vars.CLOUDSQL_INSTANCE_NAME }}
           poetry run python manage.py migrate
       - id: 'collect_static'
