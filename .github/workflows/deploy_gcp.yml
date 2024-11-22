@@ -55,7 +55,7 @@ jobs:
 #          echo "YOUR WIP is ${{ vars.AR_URL }}/${{ vars.IMAGE_NAME }} "
       - uses: 'actions/checkout@v4'
       - id: 'auth' # The exact debug procedure is described here: https://cloud.google.com/iam/docs/audit-logging/examples-workload-identity#exchange-federated
-        uses: 'google-github-actions/auth@v2'
+        uses: 'google-github-actions/auth@v2' # https://github.com/google-github-actions/auth
         with:
           token_format: access_token
           project_id: ${{ vars.PROJECT_ID }}
@@ -67,7 +67,6 @@ jobs:
           username: 'oauth2accesstoken'
           password: '${{ steps.auth.outputs.access_token }}'
           registry: '${{ vars.AR_REPO_LOCATION }}-docker.pkg.dev'
-
 #        - id: 'Set up Cloud SDK'
 #          uses: 'google-github-actions/setup-gcloud@v2'
 #          with:
@@ -78,6 +77,24 @@ jobs:
           docker tag ${{ vars.AR_URL }}/${{ vars.IMAGE_NAME }} ${{ vars.AR_URL }}/${{ vars.IMAGE_NAME }}:${{ github.sha }}
           #gcloud auth configure-docker ${{ vars.AR_REPO_LOCATION }}-docker.pkg.dev
           docker push ${{ vars.AR_URL }}/${{ vars.IMAGE_NAME }}:${{ github.sha }}
+      - id: 'setup_python'
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.11.7"
+      - id: 'install_dependencies'
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install poetry
+          poetry install
+      - id: 'migrate_db'
+        run: |-
+          curl -o cloud-sql-proxy https://storage.googleapis.com/cloud-sql-connectors/cloud-sql-proxy/v2.13.0/cloud-sql-proxy.linux.amd64
+          chmod +x cloud-sql-proxy
+          cloud-sql-proxy --auto-iam-authn ${{ vars.PROJECT_ID }}:${{ vars.CLOUDSQL_LOCATION }}:${{vars.CLOUDSQL_INSTANCE_NAME }}
+          poetry run python manage.py migrate
+      - id: 'collect_static'
+        run: |-
+          poetry run python manage.py collectstatic
       # Deploy comes from https://github.com/google-github-actions/deploy-cloudrun
       - id: 'deploy'
         uses: 'google-github-actions/deploy-cloudrun@v2'
