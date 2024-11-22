@@ -209,12 +209,10 @@ CACHES = {
 # Change this to "False" when you are ready for production
 env = environ.Env(
     # set casting, default value
-    DEBUG=(bool, True)
+    DEBUG=(bool, False)
 )
 DEBUG = env('DEBUG')
 logger = logging.getLogger(__name__)
-logging.info("XXXXXXXXXXXXX")
-exit()
 if DEBUG:
     logger.setLevel(logging.DEBUG)
 else:
