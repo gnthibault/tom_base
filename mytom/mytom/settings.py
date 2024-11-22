@@ -33,9 +33,6 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'qmy$h3u(+r@!zcbuxc&amp;s6)4i8l_9and&amp;fxcz069&amp;60ny^!1p*^'
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
-
 ALLOWED_HOSTS = ['*']
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 # CSRF_TRUSTED_ORIGINS = ['http://*', 'https://*']
@@ -186,15 +183,17 @@ LOGGING = {
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
+            'level': 'DEBUG',
         }
     },
     'loggers': {
-        '': {
+        '': { # Root logger
             'handlers': ['console'],
-            'level': 'INFO'
+            'level': 'DEBUG',
         }
     }
 }
+logging.config.dictConfig(LOGGING)
 
 # Caching
 # https://docs.djangoproject.com/en/dev/topics/cache/#filesystem-caching
@@ -208,10 +207,18 @@ CACHES = {
 
 # SECURITY WARNING: don't run with debug turned on in production!
 # Change this to "False" when you are ready for production
-env = environ.Env(DEBUG=(bool, False))
+env = environ.Env(
+    # set casting, default value
+    DEBUG=(bool, True)
+)
+DEBUG = env('DEBUG')
 env_file = os.path.join(BASE_DIR, ".env")
 logger = logging.getLogger(__name__)
-logger.error(f'XXXXXXXXXXXXXXX')
+if DEBUG:
+    logger.setLevel(logging.DEBUG)
+else:
+    logger.setLevel(logging.INFO)
+
 # Attempt to load the Project ID into the environment, safely failing on error.
 try:
     _, os.environ["GOOGLE_CLOUD_PROJECT"] = google.auth.default()
@@ -228,7 +235,7 @@ elif os.environ.get("GOOGLE_CLOUD_PROJECT", None):
     name = f"projects/{project_id}/secrets/{settings_name}/versions/latest"
     payload = client.access_secret_version(name=name).payload.data.decode("UTF-8")
     env.read_env(io.StringIO(payload))
-    logger.error(f'env is {env}')
+    logger.debug(f'env is {env}')
 else:
     raise Exception("No local .env or GOOGLE_CLOUD_PROJECT detected. No secrets found.")
 
@@ -238,7 +245,7 @@ DATABASES = {"default": env.db()}
 if os.getenv("USE_CLOUD_SQL_AUTH_PROXY", None):
     DATABASES["default"]["HOST"] = "127.0.0.1"
     DATABASES["default"]["PORT"] = 5432
-logger.error(f'Database is {DATABASES}')
+logger.debug(f'Database is {DATABASES}')
 # django.db.connection.ensure_connection()
 
 GS_BUCKET_NAME = env("GS_BUCKET_NAME")
