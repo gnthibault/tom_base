@@ -51,6 +51,7 @@ jobs:
        || github.ref_name == 'deployment/prd'  && 'prd' }}
     env:
       GOOGLE_CLOUD_PROJECT: ${{ vars.PROJECT_ID }}
+      DEBUG: True
     steps:
 #      - shell: bash
 #        run: |
@@ -97,7 +98,6 @@ jobs:
           echo $!
           echo CLOUD_SQL_PROXY_PID=$(echo $!) >> $GITHUB_ENV
           export USE_CLOUD_SQL_AUTH_PROXY=true
-          export DEBUG=True
           poetry run python manage.py migrate
       - id: 'collect_static'
         run: |-
