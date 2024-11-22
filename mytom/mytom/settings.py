@@ -212,14 +212,15 @@ env = environ.Env(
     DEBUG=(bool, True)
 )
 DEBUG = env('DEBUG')
-env_file = os.path.join(BASE_DIR, ".env")
 logger = logging.getLogger(__name__)
+logging.info("XXXXXXXXXXXXX")
 if DEBUG:
     logger.setLevel(logging.DEBUG)
 else:
     logger.setLevel(logging.INFO)
 
 # Attempt to load the Project ID into the environment, safely failing on error.
+env_file = os.path.join(BASE_DIR, ".env")
 try:
     _, os.environ["GOOGLE_CLOUD_PROJECT"] = google.auth.default()
 except google.auth.exceptions.DefaultCredentialsError:
