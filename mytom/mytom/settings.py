@@ -214,6 +214,7 @@ env = environ.Env(
 DEBUG = env('DEBUG')
 logger = logging.getLogger(__name__)
 logging.info("XXXXXXXXXXXXX")
+exit()
 if DEBUG:
     logger.setLevel(logging.DEBUG)
 else:
