@@ -88,10 +88,13 @@ jobs:
           python -m pip install poetry
           poetry install
       - id: 'migrate_db'
-        run: |-
+        run: |- ########### CLOUD_SQL_PROXY NEEDS TO BE RUN IN BACKGROUND
           curl -o ./cloud-sql-proxy https://storage.googleapis.com/cloud-sql-connectors/cloud-sql-proxy/v2.13.0/cloud-sql-proxy.linux.amd64
           chmod +x ./cloud-sql-proxy
-          ./cloud-sql-proxy --auto-iam-authn ${{ vars.PROJECT_ID }}:${{ vars.CLOUDSQL_LOCATION }}:${{vars.CLOUDSQL_INSTANCE_NAME }}
+          nohup ./cloud-sql-proxy --auto-iam-authn ${{ vars.PROJECT_ID }}:${{ vars.CLOUDSQL_LOCATION }}:${{vars.CLOUDSQL_INSTANCE_NAME }} > cloud-sql-proxy.out 2> cloud-sql-proxy.err < /dev/null &
+          echo $!
+          echo CLOUD_SQL_PROXY_PID=$(echo $!) >> $GITHUB_ENV
+          export USE_CLOUD_SQL_AUTH_PROXY=true
           poetry run python manage.py migrate
       - id: 'collect_static'
         run: |-
