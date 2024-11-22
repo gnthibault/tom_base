@@ -206,6 +206,7 @@ CACHES = {
 }
 
 # SECURITY WARNING: don't run with debug turned on in production!
+# See https://django-environ.readthedocs.io/en/latest/quickstart.html
 # Change this to "False" when you are ready for production
 env = environ.Env(
     # set casting, default value
