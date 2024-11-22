@@ -49,6 +49,8 @@ jobs:
     environment: |-
       ${{ github.ref_name == 'deployment/dev'  && 'dev'
        || github.ref_name == 'deployment/prd'  && 'prd' }}
+    env:
+      GOOGLE_CLOUD_PROJECT: ${{ vars.PROJECT_ID }}
     steps:
 #      - shell: bash
 #        run: |
@@ -88,7 +90,7 @@ jobs:
           python -m pip install poetry
           poetry install
       - id: 'migrate_db'
-        run: |- ########### CLOUD_SQL_PROXY NEEDS TO BE RUN IN BACKGROUND
+        run: |- # see https://github.com/GoogleCloudPlatform/cloud-sql-proxy/issues/1989
           curl -o ./cloud-sql-proxy https://storage.googleapis.com/cloud-sql-connectors/cloud-sql-proxy/v2.13.0/cloud-sql-proxy.linux.amd64
           chmod +x ./cloud-sql-proxy
           nohup ./cloud-sql-proxy --auto-iam-authn ${{ vars.PROJECT_ID }}:${{ vars.CLOUDSQL_LOCATION }}:${{vars.CLOUDSQL_INSTANCE_NAME }} > cloud-sql-proxy.out 2> cloud-sql-proxy.err < /dev/null &
@@ -98,7 +100,7 @@ jobs:
           poetry run python manage.py migrate
       - id: 'collect_static'
         run: |-
-          poetry run python manage.py collectstatic
+          echo yes | poetry run python manage.py collectstatic
       # Deploy comes from https://github.com/google-github-actions/deploy-cloudrun
       - id: 'deploy'
         uses: 'google-github-actions/deploy-cloudrun@v2'
