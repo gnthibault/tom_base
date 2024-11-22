@@ -102,6 +102,7 @@ jobs:
           poetry run python manage.py migrate
       - id: 'collect_static'
         run: |-
+          cd mytom
           echo yes | poetry run python manage.py collectstatic
       # Deploy comes from https://github.com/google-github-actions/deploy-cloudrun
       - id: 'deploy'
