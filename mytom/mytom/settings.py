@@ -70,7 +70,7 @@ INSTALLED_APPS = [
     'tom_catalogs',
     'tom_observations',
     'tom_dataproducts',
-    'remote_observatory_tom',
+    # 'remote_observatory_tom',
 ]
 
 SITE_ID = 1
