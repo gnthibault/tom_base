@@ -25,7 +25,9 @@ on:
 #docker push europe-west1-docker.pkg.dev/tom-toolkit-dev-hxm/remote-observatory-tom-repo/tom_app:test1
 #docker run -it -e PORT=8080 -p 8080:8080 --rm europe-west1-docker.pkg.dev/tom-toolkit-dev-hxm/remote-observatory-tom-repo/tom_app:test
 ## Cloudrun deployment
-#gcloud run services proxy tom-toolkit-instance-dev-b614bde8 --port=8080 --project=tom-toolkit-dev-hxm --region=europe-west1
+# gcloud run deploy tom-toolkit-instance-dev-b614bde8 --image europe-west1-docker.pkg.dev/tom-toolkit-dev-hxm/remote-observatory-tom-repo/tom_app:test1 --update-labels ^,^managed-by=manual_deploy,commit-sha=XXXXXXXXXXXXXXX --format json --region europe-west1 --project tom-toolkit-dev-hxm
+# gcloud run services proxy tom-toolkit-instance-dev-b614bde8 --port=8080 --project=tom-toolkit-dev-hxm --region=europe-west1
+# cloud-sql-proxy --auto-iam-authn tom-toolkit-dev-hxm:europe-west1:tom-toolkit-instance-dev-ae78f371
 #Then go to http://localhost:8080
 
 
@@ -47,13 +49,16 @@ jobs:
     environment: |-
       ${{ github.ref_name == 'deployment/dev'  && 'dev'
        || github.ref_name == 'deployment/prd'  && 'prd' }}
+    env:
+      GOOGLE_CLOUD_PROJECT: ${{ vars.PROJECT_ID }}
+      DEBUG: ${{ github.ref_name == 'deployment/dev'  && 'True' }}
     steps:
 #      - shell: bash
 #        run: |
 #          echo "YOUR WIP is ${{ vars.AR_URL }}/${{ vars.IMAGE_NAME }} "
       - uses: 'actions/checkout@v4'
       - id: 'auth' # The exact debug procedure is described here: https://cloud.google.com/iam/docs/audit-logging/examples-workload-identity#exchange-federated
-        uses: 'google-github-actions/auth@v2'
+        uses: 'google-github-actions/auth@v2' # https://github.com/google-github-actions/auth
         with:
           token_format: access_token
           project_id: ${{ vars.PROJECT_ID }}
@@ -65,7 +70,6 @@ jobs:
           username: 'oauth2accesstoken'
           password: '${{ steps.auth.outputs.access_token }}'
           registry: '${{ vars.AR_REPO_LOCATION }}-docker.pkg.dev'
-
 #        - id: 'Set up Cloud SDK'
 #          uses: 'google-github-actions/setup-gcloud@v2'
 #          with:
@@ -74,8 +78,32 @@ jobs:
         run: |-
           docker buildx build --platform linux/amd64 -t ${{ vars.AR_URL }}/${{ vars.IMAGE_NAME }} .
           docker tag ${{ vars.AR_URL }}/${{ vars.IMAGE_NAME }} ${{ vars.AR_URL }}/${{ vars.IMAGE_NAME }}:${{ github.sha }}
-          #gcloud auth configure-docker ${{ vars.AR_REPO_LOCATION }}-docker.pkg.dev
           docker push ${{ vars.AR_URL }}/${{ vars.IMAGE_NAME }}:${{ github.sha }}
+          docker tag ${{ vars.AR_URL }}/${{ vars.IMAGE_NAME }} ${{ vars.AR_URL }}/${{ vars.IMAGE_NAME }}:latest
+          docker push ${{ vars.AR_URL }}/${{ vars.IMAGE_NAME }}:latest
+      - id: 'setup_python'
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.11.7"
+      - id: 'install_dependencies'
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install poetry
+          poetry install
+      - id: 'migrate_db'
+        run: |- # see https://github.com/GoogleCloudPlatform/cloud-sql-proxy/issues/1989
+          curl -o ./cloud-sql-proxy https://storage.googleapis.com/cloud-sql-connectors/cloud-sql-proxy/v2.13.0/cloud-sql-proxy.linux.amd64
+          chmod +x ./cloud-sql-proxy
+          nohup ./cloud-sql-proxy --auto-iam-authn ${{ vars.PROJECT_ID }}:${{ vars.CLOUDSQL_LOCATION }}:${{vars.CLOUDSQL_INSTANCE_NAME }} > cloud-sql-proxy.out 2> cloud-sql-proxy.err < /dev/null &
+          echo $!
+          echo CLOUD_SQL_PROXY_PID=$(echo $!) >> $GITHUB_ENV
+          export USE_CLOUD_SQL_AUTH_PROXY=true
+          cd mytom
+          poetry run python manage.py migrate
+      - id: 'collect_static'
+        run: |-
+          cd mytom
+          echo yes | poetry run python manage.py collectstatic
       # Deploy comes from https://github.com/google-github-actions/deploy-cloudrun
       - id: 'deploy'
         uses: 'google-github-actions/deploy-cloudrun@v2'

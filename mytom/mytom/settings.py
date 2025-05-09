@@ -33,10 +33,12 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'qmy$h3u(+r@!zcbuxc&amp;s6)4i8l_9and&amp;fxcz069&amp;60ny^!1p*^'
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+# CSRF_TRUSTED_ORIGINS = ['http://*', 'https://*']
+# CSRF_TRUSTED_ORIGINS = ['*']
+# CSRF_ALLOWED_ORIGINS = ['*']
+# CORS_ORIGINS_WHITELIST = ['*']
 
 
 # Application definition
@@ -68,7 +70,7 @@ INSTALLED_APPS = [
     'tom_catalogs',
     'tom_observations',
     'tom_dataproducts',
-    'remote_observatory_tom',
+    # 'remote_observatory_tom',
 ]
 
 SITE_ID = 1
@@ -181,15 +183,17 @@ LOGGING = {
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
+            'level': 'DEBUG',
         }
     },
     'loggers': {
-        '': {
+        '': { # Root logger
             'handlers': ['console'],
-            'level': 'INFO'
+            'level': 'DEBUG',
         }
     }
 }
+logging.config.dictConfig(LOGGING)
 
 # Caching
 # https://docs.djangoproject.com/en/dev/topics/cache/#filesystem-caching
@@ -202,11 +206,21 @@ CACHES = {
 }
 
 # SECURITY WARNING: don't run with debug turned on in production!
+# See https://django-environ.readthedocs.io/en/latest/quickstart.html
 # Change this to "False" when you are ready for production
-env = environ.Env(DEBUG=(bool, False))
-env_file = os.path.join(BASE_DIR, ".env")
+env = environ.Env(
+    # set casting, default value
+    DEBUG=(bool, False)
+)
+DEBUG = env('DEBUG')
+logger = logging.getLogger(__name__)
+if DEBUG:
+    logger.setLevel(logging.DEBUG)
+else:
+    logger.setLevel(logging.INFO)
 
 # Attempt to load the Project ID into the environment, safely failing on error.
+env_file = os.path.join(BASE_DIR, ".env")
 try:
     _, os.environ["GOOGLE_CLOUD_PROJECT"] = google.auth.default()
 except google.auth.exceptions.DefaultCredentialsError:
@@ -222,6 +236,7 @@ elif os.environ.get("GOOGLE_CLOUD_PROJECT", None):
     name = f"projects/{project_id}/secrets/{settings_name}/versions/latest"
     payload = client.access_secret_version(name=name).payload.data.decode("UTF-8")
     env.read_env(io.StringIO(payload))
+    # logger.info(f'env is {env}')
 else:
     raise Exception("No local .env or GOOGLE_CLOUD_PROJECT detected. No secrets found.")
 
@@ -231,7 +246,8 @@ DATABASES = {"default": env.db()}
 if os.getenv("USE_CLOUD_SQL_AUTH_PROXY", None):
     DATABASES["default"]["HOST"] = "127.0.0.1"
     DATABASES["default"]["PORT"] = 5432
-django.db.connection.ensure_connection()
+# logger.info(f'Database is {DATABASES}')
+# django.db.connection.ensure_connection()
 
 GS_BUCKET_NAME = env("GS_BUCKET_NAME")
 STORAGES = {
@@ -308,6 +324,7 @@ TOM_FACILITY_CLASSES = [
     'tom_observations.facilities.lco.LCOFacility',
     'tom_observations.facilities.gemini.GEMFacility',
     'tom_observations.facilities.soar.SOARFacility',
+    'mytom.remote_observatory.RemoteObservatory'
 ]
 
 TOM_ALERT_CLASSES = [
@@ -316,7 +333,7 @@ TOM_ALERT_CLASSES = [
     'tom_alerts.brokers.gaia.GaiaBroker',
     'tom_alerts.brokers.lasair.LasairBroker',
     'tom_alerts.brokers.tns.TNSBroker',
-    #  'tom_alerts.brokers.fink.FinkBroker',
+    'tom_alerts.brokers.fink.FinkBroker',
 ]
 
 BROKERS = {

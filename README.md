@@ -88,20 +88,39 @@ curl -o cloud-sql-proxy https://storage.googleapis.com/cloud-sql-connectors/clou
 curl -o cloud-sql-proxy https://storage.googleapis.com/cloud-sql-connectors/cloud-sql-proxy/v2.13.0/cloud-sql-proxy.linux.amd64
 # Then
 chmod +x cloud-sql-proxy
-# Then run with
+# Then run it with
 ./cloud-sql-proxy $PROJECT_ID:$REGION:$INSTANCE_NAME
-#./cloud-sql-proxy tom-toolkit-dev-hxm:europe-west1:tom-toolkit-instance-dev-ae78f371
+#./cloud-sql-proxy --auto-iam-authn tom-toolkit-dev-hxm:europe-west1:tom-toolkit-instance-dev-ae78f371
+# brew install postgresql
+# psql "dbname=tom_toolkit host=127.0.0.1 user=XXX@XXXX.net"
+
 # configure
 export GOOGLE_CLOUD_PROJECT=YOUR_PROJECT_ID
 # export GOOGLE_CLOUD_PROJECT=tom-toolkit-dev-hxm
 export SETTINGS_NAME=YOUR=YOUR_SECRET_SETTINGS_NAME # default is set to django_settings, no need to specify if default
 export USE_CLOUD_SQL_AUTH_PROXY=true
 # Run the Django migrations to set up your models and assets:
+poetry run python manage.py --help
 poetry run python manage.py makemigrations
 poetry run python manage.py migrate
+poetry run python manage.py createsuperuser
 poetry run python manage.py collectstatic
 poetry run python manage.py runserver 8080
 # In your browser, go to http://localhost:8080
+
+# If you deploy manually with
+#
+# You can then run iap proxy
+# gcloud run services proxy tom-toolkit-instance-dev-b614bde8 --port=8080 --project=tom-toolkit-dev-hxm --region=europe-west1
+# And then reach-out to http://127.0.0.1:8080/
+```
+
+## Manual cloudrun deployment command set
+
+```bash
+  gcloud run deploy tom-toolkit-instance-dev-b614bde8 --image europe-west1-docker.pkg.dev/tom-toolkit-dev-hxm/remote-observatory-tom-repo/tom_app:test1 --update-labels ^,^managed-by=manual_deploy,commit-sha=XXXXXXXXXXXXXXX --format json --region europe-west1 --project tom-toolkit-dev-hxm
+  gcloud run services proxy tom-toolkit-instance-dev-b614bde8 --port=8080 --project=tom-toolkit-dev-hxm --region=europe-west1
+  cloud-sql-proxy --auto-iam-authn tom-toolkit-dev-hxm:europe-west1:tom-toolkit-instance-dev-ae78f371
 ```
 
 ## Rest of the original doc
