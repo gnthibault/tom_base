@@ -81,6 +81,20 @@ poetry run python manage.py runserver # Runs ...
 
 ## Install prerequisite for gcp deployment: cloud sql
 
+First, edit the file at tom_base/mytome/.env with the following content, depending on wether you'd like to use 
+local sqlite db or the cloudsql remote db:
+```bash
+DATABASE_URL=sqlite:///db.sqlite3
+```
+
+Now if you want to develop with remote DB, based on local proxy, do the following:
+edit tom_base/mytom/.env:
+```bash
+DATABASE_URL=postgres://tom_toolkit:DB_PWD_XXX//cloudsql/YOUR_PROJECT_ID:europe-west1:CLOUD_SQL_INSTANCE_NAME/tom_toolkit
+GS_BUCKET_NAME=YOUR_GCS_BUCKET_NAME_FOR_TOM_TOOLKIT
+SECRET_KEY=$(cat /dev/urandom | LC_ALL=C tr -dc '[:alpha:]'| fold -w 50 | head -n1)
+```
+
 ```bash
 # On mac
 curl -o cloud-sql-proxy https://storage.googleapis.com/cloud-sql-connectors/cloud-sql-proxy/v2.13.0/cloud-sql-proxy.darwin.amd64
