@@ -4,7 +4,7 @@ from django import forms
 # Locals
 from tom_observations.facility import BaseRoboticObservationFacility, BaseRoboticObservationForm
 
-class RemoteObservatoryBaseForm(BaseRoboticObservationForm):
+class RemoteObservatoryFacilityForm(BaseRoboticObservationForm):
     exposure_time = forms.IntegerField()
     exposure_count = forms.IntegerField()
 
@@ -15,15 +15,16 @@ class RemoteObservatoryBaseForm(BaseRoboticObservationForm):
         )
 
 
-class RemoteObservatory(BaseRoboticObservationFacility):
+class RemoteObservatoryFacility(BaseRoboticObservationFacility):
     """
     Main documentation here: https://tom-toolkit.readthedocs.io/en/latest/api/tom_observations/facilities.html
     """
     name = 'RemoteObservatory'
     observation_types = [('spectro_lr', 'spectro_hr')]
     observation_forms = {
-        'spectro_lr': RemoteObservatoryBaseForm,
-        'spectro_hr': RemoteObservatoryBaseForm,
+        'default_field': RemoteObservatoryFacilityForm,
+        'spectro_lr'   : RemoteObservatoryFacilityForm,
+        'spectro_hr'   : RemoteObservatoryFacilityForm,
     }
     SITES = {
         # https://trevincaskies.com/#faq
@@ -42,8 +43,13 @@ class RemoteObservatory(BaseRoboticObservationFacility):
     def data_products(self, observation_id, product_id=None):
        return []
 
+    def get_template_form(self):
+        pass
     def get_form(self, observation_type):
-        return self.observation_forms[observation_type]
+        try:
+            return self.observation_forms[observation_type]
+        except KeyError:
+            return self.observation_forms["default_field"]
 
     def get_observation_status(self, observation_id):
         return ['IN_PROGRESS']

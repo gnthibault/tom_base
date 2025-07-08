@@ -324,7 +324,7 @@ TOM_FACILITY_CLASSES = [
     'tom_observations.facilities.lco.LCOFacility',
     'tom_observations.facilities.gemini.GEMFacility',
     'tom_observations.facilities.soar.SOARFacility',
-    'mytom.remote_observatory.RemoteObservatory'
+    'mytom.remote_observatory.RemoteObservatoryFacility'
 ]
 
 TOM_ALERT_CLASSES = [
