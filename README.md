@@ -81,7 +81,7 @@ poetry run python manage.py runserver # Runs ...
 
 ## Install prerequisite for gcp deployment: cloud sql
 
-First, edit the file at tom_base/mytome/.env with the following content, depending on wether you'd like to use 
+First, edit the file at tom_base/mytom/.env with the following content, depending on wether you'd like to use 
 local sqlite db or the cloudsql remote db:
 ```bash
 DATABASE_URL=sqlite:///db.sqlite3

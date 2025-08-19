@@ -1,5 +1,6 @@
 from crispy_forms.layout import Layout
 from django import forms
+import requests
 
 # Locals
 from tom_observations.facility import BaseRoboticObservationFacility, BaseRoboticObservationForm
@@ -13,7 +14,6 @@ class RemoteObservatoryFacilityForm(BaseRoboticObservationForm):
             'exposure_time',
             'exposure_count'
         )
-
 
 class RemoteObservatoryFacility(BaseRoboticObservationFacility):
     """
@@ -39,9 +39,16 @@ class RemoteObservatoryFacility(BaseRoboticObservationFacility):
             'elevation': 800
         }
     }
+    base_url = "http://127.0.0.1:8888"
 
     def data_products(self, observation_id, product_id=None):
-       return []
+        url = f"{self.base_url}/get_observation_data/{observation_id}"
+        response = requests.get(url)
+        response.raise_for_status()
+        save_to = f"data_product_{observation_id}.zip"
+        with open(save_to, "wb") as f:
+            f.write(response.content)
+        print(f"Saved zip file to {save_to}")
 
     def get_template_form(self):
         pass
@@ -52,16 +59,19 @@ class RemoteObservatoryFacility(BaseRoboticObservationFacility):
             return self.observation_forms["default_field"]
 
     def get_observation_status(self, observation_id):
-        return ['IN_PROGRESS']
+        url = f"{self.base_url}/get_observation_status/{observation_id}"
+        response = requests.get(url)
+        response.raise_for_status()
+        return [response.json()["status"]]
 
     def get_observation_url(self, observation_id):
-        return ''
+        return f"{self.base_url}/get_observation_status/{observation_id}"
 
     def get_observing_sites(self):
         return self.SITES
 
     def get_terminal_observing_states(self):
-        return ['IN_PROGRESS', 'COMPLETED']
+        return ["posted", "scheduling", "acquiring", "calibrating", "ready"]
 
     def submit_observation(self, observation_payload):
         """
@@ -72,8 +82,10 @@ class RemoteObservatoryFacility(BaseRoboticObservationFacility):
         In our dummy implementation, we simply print out the observation payload and return a single fake id with
         return [1].
         """
-        print(observation_payload)
-        return [1]
+        url = f"{self.base_url}/request_observation"
+        response = requests.post(url, json=observation_payload)
+        response.raise_for_status()
+        return [response.json()["observation_id"]]
 
     def validate_observation(self, observation_payload):
         pass
