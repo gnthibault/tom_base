@@ -54,6 +54,7 @@ class RemoteObservatoryFacilityForm(BaseRoboticObservationForm):
         payload.pop("target_id", None)
         payload.pop("cadence_strategy", None)
         payload.pop("facility", None)
+        payload.pop("observation_type", None)
         payload["target"] = target.name
         return payload
 
