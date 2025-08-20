@@ -105,7 +105,7 @@ class RemoteObservatoryFacility(BaseRoboticObservationFacility):
         url = f"{self.base_url}/get_observation_status/{observation_id}"
         response = requests.get(url)
         response.raise_for_status()
-        return [response.json()["status"]]
+        return [response.json()]
 
     def get_observation_url(self, observation_id):
         return f"{self.base_url}/get_observation_status/{observation_id}"
