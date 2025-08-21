@@ -84,13 +84,16 @@ class RemoteObservatoryFacility(BaseRoboticObservationFacility):
     base_url = "http://127.0.0.1:8888"
 
     def data_products(self, observation_id, product_id=None):
+        """
+        Using an observation_id, retrieve a list of the data
+        products that belong to this observation. In this case,
+        the LCO module retrieves a list of frames from the LCO
+        data archive.
+        """
         url = f"{self.base_url}/get_observation_data/{observation_id}"
         response = requests.get(url)
         response.raise_for_status()
-        save_to = f"data_product_{observation_id}.zip"
-        with open(save_to, "wb") as f:
-            f.write(response.content)
-        print(f"Saved zip file to {save_to}")
+        return response.json()['data_products']
 
     def get_template_form(self):
         pass
@@ -114,7 +117,9 @@ class RemoteObservatoryFacility(BaseRoboticObservationFacility):
         return self.SITES
 
     def get_terminal_observing_states(self):
-        return ["posted", "scheduling", "acquiring", "calibrating", "ready"]
+        #return ["posted", "scheduling", "acquiring", "calibrating", "ready"]
+        return ["ready", "canceled", "failed", "timed_out"]
+
 
     def submit_observation(self, observation_payload):
         """
@@ -138,7 +143,6 @@ class RemoteObservatoryFacility(BaseRoboticObservationFacility):
         Typically called by the ObservationForm.is_valid() method.
         """
         pass
-        print("test")
 
     def get_facility_weather_urls(self):
         """
@@ -179,4 +183,6 @@ class RemoteObservatoryFacility(BaseRoboticObservationFacility):
 
         If the cancellation was successful, return True. Otherwise, return False.
         """
-        raise NotImplementedError('This facility has not implemented cancel observation.')
+        url = f"{self.base_url}/cancel_observation/{observation_id}"
+        response = requests.get(url)
+        response.raise_for_status()
