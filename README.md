@@ -34,6 +34,8 @@ brew install poetry
 pyenv install -v 3.11.7   # 3.12 and above do not work
 poetry env use python3.11 # creates virtualenv
 poetry install            # Will install all dependencies in your poetry virtual env
+# In case you need to add a dependency use
+poetry add django-environ
 ```
 Now you want to follow the steps explained on https://tom-toolkit.readthedocs.io/en/latest/introduction/manual_installation.html
 in order to setup your "a la carte" tom based on django modular design.
