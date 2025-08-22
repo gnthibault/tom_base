@@ -90,7 +90,7 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install poetry
           poetry install
-      - id: 'migrate_db'
+      - id: 'migrate_db + collect_static'
         run: |- # see https://github.com/GoogleCloudPlatform/cloud-sql-proxy/issues/1989
           curl -o ./cloud-sql-proxy https://storage.googleapis.com/cloud-sql-connectors/cloud-sql-proxy/v2.13.0/cloud-sql-proxy.linux.amd64
           chmod +x ./cloud-sql-proxy
@@ -100,10 +100,11 @@ jobs:
           export USE_CLOUD_SQL_AUTH_PROXY=true
           cd mytom
           poetry run python manage.py migrate
-      - id: 'collect_static'
-        run: |-
-          cd mytom
           echo yes | poetry run python manage.py collectstatic
+#      - id: 'collect_static'
+#        run: |-
+#          cd mytom
+#          echo yes | poetry run python manage.py collectstatic
       # Deploy comes from https://github.com/google-github-actions/deploy-cloudrun
       - id: 'deploy'
         uses: 'google-github-actions/deploy-cloudrun@v2'
