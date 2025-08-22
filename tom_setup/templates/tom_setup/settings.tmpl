@@ -44,6 +44,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.sites',
     'django_extensions',
+    'django_tasks',
+    'django_tasks.backends.database',
     'guardian',
     'tom_common',
     'django_comments',
@@ -193,6 +195,13 @@ CACHES = {
     }
 }
 
+TASKS = {
+    "default": {
+        # "BACKEND": "django_tasks.backends.database.DatabaseBackend"
+        "BACKEND": "django_tasks.backends.immediate.ImmediateBackend"
+    }
+}
+
 # TOM Specific configuration
 TARGET_TYPE = '{{ TARGET_TYPE }}'
 
@@ -273,7 +282,7 @@ BROKERS = {
         'bot_id': '',
         'bot_name': '',
     },
-    'Lasair': {
+    'LASAIR': {
         'api_key': '',
     }
 }
@@ -311,6 +320,9 @@ AUTH_STRATEGY = 'READ_ONLY'
 # `ObservationRecord`, `DataProduct`, and `ReducedDatum` objects.
 TARGET_PERMISSIONS_ONLY = True
 
+# Default permission for newly created targets. Values can be 'PRIVATE', 'PUBLIC', or 'OPEN'
+TARGET_DEFAULT_PERMISSION = 'PRIVATE'
+
 # URLs that should be allowed access even with AUTH_STRATEGY = LOCKED
 # for example: OPEN_URLS = ['/', '/about']
 OPEN_URLS = []
@@ -343,6 +355,10 @@ REST_FRAMEWORK = {
 # Default Plotly theme setting, can set to any valid theme:
 # 'plotly', 'plotly_white', 'plotly_dark', 'ggplot2', 'seaborn', 'simple_white', 'none'
 PLOTLY_THEME = 'plotly_white'
+
+# Setting for displaying pagination information (e.g., "(0-0 of 0)").
+# Set this to False if you have a particularly large DB and paginated views are slow.
+SHOW_PAGINATION_INFO = True
 
 try:
     from local_settings import * # noqa

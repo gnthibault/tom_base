@@ -86,6 +86,7 @@ docs/_build/
 
 # VS Code
 .vscode/
+.vs/
 *.code-workspace
 
 # PyBuilder

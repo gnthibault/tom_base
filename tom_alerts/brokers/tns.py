@@ -132,7 +132,7 @@ class TNSBroker(GenericBroker):
         transients = cls.fetch_tns_transients(parameters)
 
         alerts = []
-        for transient in transients['data']['reply']:
+        for transient in transients['data']:
 
             alert = cls.get_tns_object_info(transient)
 
@@ -170,9 +170,12 @@ class TNSBroker(GenericBroker):
         Args:
             parameters: dictionary containing days_ago (str), min_date (str)
             and either:
-                - Right Ascention, declination (can be deg, deg or h:m:s, d:m:s) of the target,
+
+            - Right Ascention, declination (can be deg, deg or h:m:s, d:m:s) of the target,
                 and search radius and search radius unit ("arcmin", "arcsec", or "deg"), or
-                - TNS name without the prefix (eg. 2024aa instead of AT2024aa)
+
+            - TNS name without the prefix (eg. 2024aa instead of AT2024aa)
+
         Returns:
             json containing response from TNS including TNS name and prefix.
         """
@@ -232,6 +235,6 @@ class TNSBroker(GenericBroker):
         }
         response = requests.post(TNS_OBJECT_URL, data, headers=cls.tns_headers())
         response.raise_for_status()
-        obj_info = response.json()['data']['reply']
+        obj_info = response.json()['data']
 
         return obj_info

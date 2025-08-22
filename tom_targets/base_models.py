@@ -10,6 +10,7 @@ from django.urls import reverse
 from django.utils.module_loading import import_string
 from guardian.shortcuts import assign_perm
 from math import radians
+from astropy.coordinates import get_constellation, SkyCoord
 
 from tom_common.hooks import run_hook
 
@@ -159,12 +160,13 @@ class TargetMatchManager(models.Manager):
         queryset = super().get_queryset().filter(name=name)
         return queryset
 
-    def match_fuzzy_name(self, name):
+    def match_fuzzy_name(self, name, input_queryset=None):
         """
         Returns a queryset of targets with a name OR ALIAS that, when processed by ``simplify_name``, match a similarly
         processed version of the name that is received.
 
         :param name: The string against which target names and aliases will be matched.
+        :param input_queryset: Optional queryset to filter the results. If not provided, all targets will be considered.
 
         :return: queryset containing matching Targets. Will return targets even when matched value is an alias.
         """
@@ -174,7 +176,8 @@ class TargetMatchManager(models.Manager):
             for alias in target.names:
                 if self.simplify_name(alias) == simple_name:
                     matching_names.append(target.name)
-        queryset = self.get_queryset().filter(name__in=matching_names)
+        initial_queryset = input_queryset or self.get_queryset()
+        queryset = initial_queryset.filter(name__in=matching_names)
         return queryset
 
     def simplify_name(self, name):
@@ -188,6 +191,13 @@ class TargetMatchManager(models.Manager):
         :return: A simplified string version of the given name.
         """
         return name.lower().replace(" ", "").replace("-", "").replace("_", "").replace("(", "").replace(")", "")
+
+
+def get_default_target_permission():
+    try:
+        return settings.TARGET_DEFAULT_PERMISSION
+    except AttributeError:
+        return BaseTarget.Permissions.PRIVATE
 
 
 class BaseTarget(models.Model):
@@ -239,7 +249,7 @@ class BaseTarget(models.Model):
     :param scheme: Orbital Element Scheme
     :type scheme: str
 
-    :param epoch_of_elements: Epoch of elements in JD.
+    :param epoch_of_elements: Epoch of elements as Modified Julian Date (MJD).
     :type epoch_of_elements: float
 
     :param mean_anomaly: Angle in degrees.
@@ -263,7 +273,7 @@ class BaseTarget(models.Model):
     :param semimajor_axis: Semimajor Axis in AU
     :type semimajor_axis: float
 
-    :param epoch_of_perihelion: Julian Date.
+    :param epoch_of_perihelion: Time of perihelion as a Modified Julian Date (MJD).
     :type epoch_of_perihelion: float
 
     :param ephemeris_period: Ephemeris period in days
@@ -289,6 +299,11 @@ class BaseTarget(models.Model):
         ('JPL_MAJOR_PLANET', 'JPL Major Planet')
     )
 
+    class Permissions(models.TextChoices):
+        OPEN = 'OPEN'
+        PUBLIC = 'PUBLIC'
+        PRIVATE = 'PRIVATE'
+
     name = models.CharField(
         max_length=100, default='', verbose_name='Name', help_text='The name of this target e.g. Barnard\'s star.',
         unique=True
@@ -298,11 +313,16 @@ class BaseTarget(models.Model):
     )
     created = models.DateTimeField(
         auto_now_add=True, verbose_name='Time Created',
-        help_text='The time which this target was created in the TOM database.'
+        help_text='The time which this target was created in the TOM database.',
+        db_index=True
     )
     modified = models.DateTimeField(
         auto_now=True, verbose_name='Last Modified',
         help_text='The time which this target was changed in the TOM database.'
+    )
+    permissions = models.CharField(
+        max_length=100, default=get_default_target_permission, choices=Permissions.choices,
+        help_text='The access level of this target, see the docs on public vs private targets.'
     )
     ra = models.FloatField(
         null=True, blank=True, verbose_name='Right Ascension', help_text='Right Ascension, in degrees.'
@@ -339,7 +359,7 @@ class BaseTarget(models.Model):
         max_length=50, choices=TARGET_SCHEMES, verbose_name='Orbital Element Scheme', default='', blank=True
     )
     epoch_of_elements = models.FloatField(
-        null=True, blank=True, verbose_name='Epoch of Elements', help_text='Julian date.'
+        null=True, blank=True, verbose_name='Epoch of Elements', help_text='Modified Julian date.'
     )
     mean_anomaly = models.FloatField(
         null=True, blank=True, verbose_name='Mean Anomaly', help_text='Angle in degrees.'
@@ -366,7 +386,7 @@ class BaseTarget(models.Model):
         null=True, blank=True, verbose_name='Semimajor Axis', help_text='In AU'
     )
     epoch_of_perihelion = models.FloatField(
-        null=True, blank=True, verbose_name='Epoch of Perihelion', help_text='Julian Date.'
+        null=True, blank=True, verbose_name='Epoch of Perihelion', help_text='Modified Julian Date.'
     )
     ephemeris_period = models.FloatField(
         null=True, blank=True, verbose_name='Ephemeris Period', help_text='Days'
@@ -415,6 +435,7 @@ class BaseTarget(models.Model):
         :Keyword Arguments:
             * extras (`dict`): dictionary of key/value pairs representing target attributes
         """
+
         extras = kwargs.pop('extras', {})
         names = kwargs.pop('names', [])
 
@@ -434,7 +455,7 @@ class BaseTarget(models.Model):
             target_extra.save()
 
         for name in names:
-            name, _ = self.targetname_set.get_or_create(target=self, name=name)
+            name, _ = self.aliases.get_or_create(target=self, name=name)
             name.full_clean()
             name.save()
 
@@ -487,6 +508,20 @@ class BaseTarget(models.Model):
         :rtype: list
         """
         return [self.name] + [alias.name for alias in self.aliases.all()]
+
+    @property
+    def constellation(self):
+        """
+        Gets the constellation of this target if it is sidereal
+
+        :returns: The constellation of this target according to astropy
+        :rtype: str
+        """
+        constellation = None
+        if self.type == 'SIDEREAL':
+            coordinates = SkyCoord(self.ra, self.dec, frame='icrs', unit='deg')
+            constellation = get_constellation(coordinates)
+        return constellation
 
     @property
     def future_observations(self):

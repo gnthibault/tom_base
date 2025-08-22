@@ -2,7 +2,7 @@ import pytz
 from datetime import datetime
 import responses
 
-from django.contrib.auth.models import User, Group
+from django.contrib.auth.models import AnonymousUser, User, Group
 from django.contrib.messages import get_messages
 from django.contrib.messages.constants import SUCCESS, WARNING
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -18,6 +18,7 @@ from tom_observations.tests.factories import ObservingRecordFactory
 from tom_targets.models import Target, TargetExtra, TargetList, TargetName
 from tom_targets.utils import import_targets
 from tom_targets.merge import target_merge
+from tom_targets.permissions import targets_for_user
 from tom_dataproducts.models import ReducedDatum, DataProduct
 from tom_observations.models import ObservationRecord
 from guardian.shortcuts import assign_perm, get_perms
@@ -27,8 +28,9 @@ class TestTargetListUserPermissions(TestCase):
     def setUp(self):
         self.user = User.objects.create(username='testuser')
         self.user2 = User.objects.create(username='unauthorized')
-        self.st1 = SiderealTargetFactory.create()
-        self.st2 = SiderealTargetFactory.create()
+        self.st1 = SiderealTargetFactory.create(permissions="PRIVATE")
+        self.st2 = SiderealTargetFactory.create(permissions="PRIVATE")
+        self.st3 = SiderealTargetFactory.create(permissions="PUBLIC")
 
         assign_perm('tom_targets.view_target', self.user, self.st1)
         assign_perm('tom_targets.view_target', self.user, self.st2)
@@ -39,20 +41,23 @@ class TestTargetListUserPermissions(TestCase):
         response = self.client.get(reverse('targets:list'))
         self.assertContains(response, self.st1.name)
         self.assertContains(response, self.st2.name)
+        self.assertContains(response, self.st3.name)
 
     def test_list_targets_limited_permissions(self):
         self.client.force_login(self.user2)
         response = self.client.get(reverse('targets:list'))
         self.assertContains(response, self.st2.name)
         self.assertNotContains(response, self.st1.name)
+        self.assertContains(response, self.st3.name)
 
 
 class TestTargetListGroupPermissions(TestCase):
     def setUp(self):
         self.user = User.objects.create(username='testuser')
         self.user2 = User.objects.create(username='unauthorized')
-        self.st1 = SiderealTargetFactory.create()
-        self.st2 = SiderealTargetFactory.create()
+        self.st1 = SiderealTargetFactory.create(permissions="PRIVATE")
+        self.st2 = SiderealTargetFactory.create(permissions="PRIVATE")
+        self.st3 = SiderealTargetFactory.create(permissions="PUBLIC")
         self.group1 = Group.objects.create(name='group1')
         self.group2 = Group.objects.create(name='group2')
         self.group1.user_set.add(self.user)
@@ -67,12 +72,14 @@ class TestTargetListGroupPermissions(TestCase):
         response = self.client.get(reverse('targets:list'))
         self.assertContains(response, self.st1.name)
         self.assertContains(response, self.st2.name)
+        self.assertContains(response, self.st3.name)
 
     def test_list_targets_limited_permissions(self):
         self.client.force_login(self.user2)
         response = self.client.get(reverse('targets:list'))
         self.assertContains(response, self.st2.name)
         self.assertNotContains(response, self.st1.name)
+        self.assertContains(response, self.st3.name)
 
 
 # Because the target detail page has a templatetag that tries to get the facility status, these tests fail without
@@ -84,8 +91,8 @@ class TestTargetDetail(TestCase):
     def setUp(self):
         user = User.objects.create(username='testuser')
         self.client.force_login(user)
-        self.st = SiderealTargetFactory.create(ra=123.456, dec=-32.1)
-        self.nst = NonSiderealTargetFactory.create()
+        self.st = SiderealTargetFactory.create(ra=123.456, dec=-32.1, permissions="PRIVATE")
+        self.nst = NonSiderealTargetFactory.create(permissions="PRIVATE")
         assign_perm('tom_targets.view_target', user, self.st)
         assign_perm('tom_targets.view_target', user, self.nst)
 
@@ -120,9 +127,9 @@ class TestTargetNameSearch(TestCase):
         self.user = User.objects.create(username='testuser')
         self.user2 = User.objects.create(username='testuser2')
 
-        self.st1 = SiderealTargetFactory.create(name='testtarget1')
-        self.st2 = SiderealTargetFactory.create(name='testtarget2')
-        self.st3 = SiderealTargetFactory.create(name='testtarget3')
+        self.st1 = SiderealTargetFactory.create(name='testtarget1', permissions="PRIVATE")
+        self.st2 = SiderealTargetFactory.create(name='testtarget2', permissions="PRIVATE")
+        self.st3 = SiderealTargetFactory.create(name='testtarget3', permissions="PRIVATE")
 
         assign_perm('tom_targets.view_target', self.user, self.st1)
         assign_perm('tom_targets.view_target', self.user2, self.st1)
@@ -198,6 +205,7 @@ class TestTargetCreate(TestCase):
             'type': Target.SIDEREAL,
             'ra': 123.456,
             'dec': -32.1,
+            'permissions': 'PRIVATE',
             'groups': [self.group.id],
             'targetextra_set-TOTAL_FORMS': 1,
             'targetextra_set-INITIAL_FORMS': 0,
@@ -222,6 +230,7 @@ class TestTargetCreate(TestCase):
             'type': Target.SIDEREAL,
             'ra': 123.456,
             'dec': -32.1,
+            'permissions': 'PUBLIC',
             'groups': [],
             'targetextra_set-TOTAL_FORMS': 1,
             'targetextra_set-INITIAL_FORMS': 0,
@@ -238,7 +247,7 @@ class TestTargetCreate(TestCase):
         self.assertContains(response, target_data['name'])
         self.assertTrue(Target.objects.filter(name=target_data['name']).exists())
         # Check Target level permissions
-        self.assertIn("view_target", get_perms(self.user, Target.objects.filter(name=target_data['name'])[0]))
+        self.assertTrue(targets_for_user(self.user, Target.objects.filter(name=target_data['name']), 'view_target'))
 
     def test_create_target_sexigesimal(self):
         """
@@ -249,6 +258,7 @@ class TestTargetCreate(TestCase):
             'type': Target.SIDEREAL,
             'ra': '05:34:31.94',
             'dec': '+22:00:52.2',
+            'permissions': 'PRIVATE',
             'groups': [self.group.id],
             'targetextra_set-TOTAL_FORMS': 1,
             'targetextra_set-INITIAL_FORMS': 0,
@@ -277,6 +287,7 @@ class TestTargetCreate(TestCase):
             'type': Target.SIDEREAL,
             'ra': '05:34:31.94',
             'dec': '+22:00:52.2',
+            'permissions': 'PRIVATE',
             'groups': [self.group.id],
             'targetextra_set-TOTAL_FORMS': 1,
             'targetextra_set-INITIAL_FORMS': 0,
@@ -293,6 +304,11 @@ class TestTargetCreate(TestCase):
         self.assertContains(response, target_data['name'])
         target = Target.objects.get(name=target_data['name'])
         self.assertTrue(target.targetextra_set.filter(key='category', value='type2').exists())
+
+    @override_settings(TARGET_DEFAULT_PERMISSION='OPEN')
+    def test_create_target_configurable_permissions(self):
+        target = Target.objects.create(name='test_target', type=Target.SIDEREAL, ra='83.6', dec='30.21')
+        self.assertEqual(target.permissions, 'OPEN')
 
     @override_settings(EXTRA_FIELDS=[
         {'name': 'wins', 'type': 'number', 'default': '12'},
@@ -311,6 +327,7 @@ class TestTargetCreate(TestCase):
             'checked': True,
             'birthdate': datetime(year=2019, month=2, day=14),
             'author': 'Dr. Suess',
+            'permissions': 'PRIVATE',
             'groups': [self.group.id],
             'targetextra_set-TOTAL_FORMS': 1,
             'targetextra_set-INITIAL_FORMS': 0,
@@ -367,7 +384,7 @@ class TestTargetCreate(TestCase):
         target = SiderealTargetFactory.create()
         target.save(extras={'foo': '1984'})
         te = target.targetextra_set.get(key='foo')
-        self.assertEquals(te.typed_value('number'), 1984.0)
+        self.assertEqual(te.typed_value('number'), 1984.0)
         self.assertIsNone(te.typed_value('datetime'))
 
     def test_non_sidereal_required_fields(self):
@@ -375,6 +392,7 @@ class TestTargetCreate(TestCase):
             'name': 'nonsidereal_target',
             'identifier': 'nonsidereal_identifier',
             'type': Target.NON_SIDEREAL,
+            'permissions': 'PUBLIC',
             'epoch_of_elements': 100,
             'lng_asc_node': 100,
             'arg_of_perihelion': 100,
@@ -441,6 +459,7 @@ class TestTargetCreate(TestCase):
             'type': Target.SIDEREAL,
             'ra': 113.456,
             'dec': -22.1,
+            'permissions': 'PRIVATE',
             'groups': [self.group.id],
             'targetextra_set-TOTAL_FORMS': 1,
             'targetextra_set-INITIAL_FORMS': 0,
@@ -463,12 +482,26 @@ class TestTargetCreate(TestCase):
         for target_name in names:
             self.assertTrue(TargetName.objects.filter(target=target, name=target_name).exists())
 
+    def test_direct_creation_of_targets_with_multiple_names(self):
+        target_data = {
+            'name': 'multiple_names_target',
+            'type': Target.SIDEREAL,
+            'ra': 113.456,
+            'dec': -22.1}
+        names = ['John', 'Doe']
+        target = Target(**target_data)
+        target.save(names=names)
+        self.assertEqual(target.name, target_data['name'])
+        for target_name in names:
+            self.assertTrue(TargetName.objects.filter(target=target, name=target_name).exists())
+
     def test_create_targets_with_conflicting_names(self):
         target_data = {
             'name': 'multiple_names_target',
             'type': Target.SIDEREAL,
             'ra': 113.456,
             'dec': -22.1,
+            'permissions': 'PRIVATE',
             'groups': [self.group.id],
             'targetextra_set-TOTAL_FORMS': 1,
             'targetextra_set-INITIAL_FORMS': 0,
@@ -495,6 +528,7 @@ class TestTargetCreate(TestCase):
             'type': Target.SIDEREAL,
             'ra': 113.456,
             'dec': -22.1,
+            'permissions': 'PRIVATE',
             'groups': [self.group.id],
             'targetextra_set-TOTAL_FORMS': 1,
             'targetextra_set-INITIAL_FORMS': 0,
@@ -523,6 +557,7 @@ class TestTargetCreate(TestCase):
             'type': Target.SIDEREAL,
             'ra': 113.456,
             'dec': -22.1,
+            'permissions': 'PRIVATE',
             'groups': [self.group.id],
             'targetextra_set-TOTAL_FORMS': 1,
             'targetextra_set-INITIAL_FORMS': 0,
@@ -555,6 +590,7 @@ class TestTargetCreate(TestCase):
             'type': Target.SIDEREAL,
             'ra': 113.456,
             'dec': -22.1,
+            'permissions': 'PRIVATE',
             'groups': [self.group.id],
             'targetextra_set-TOTAL_FORMS': 1,
             'targetextra_set-INITIAL_FORMS': 0,
@@ -583,6 +619,7 @@ class TestTargetCreate(TestCase):
             'type': Target.SIDEREAL,
             'ra': 113.456,
             'dec': -22.1,
+            'permissions': 'PRIVATE',
             'groups': [self.group.id],
             'targetextra_set-TOTAL_FORMS': 1,
             'targetextra_set-INITIAL_FORMS': 0,
@@ -613,6 +650,7 @@ class TestTargetCreate(TestCase):
             'type': Target.SIDEREAL,
             'ra': 113.456,
             'dec': -22.1,
+            'permissions': 'PRIVATE',
             'groups': [self.group.id],
             'targetextra_set-TOTAL_FORMS': 1,
             'targetextra_set-INITIAL_FORMS': 0,
@@ -639,6 +677,7 @@ class TestTargetCreate(TestCase):
             'type': Target.SIDEREAL,
             'ra': 113.456,
             'dec': -22.1,
+            'permissions': 'PRIVATE',
             'groups': [self.group.id],
             'targetextra_set-TOTAL_FORMS': 1,
             'targetextra_set-INITIAL_FORMS': 0,
@@ -668,7 +707,8 @@ class TestTargetUpdate(TestCase):
             'name': 'testtarget',
             'type': Target.SIDEREAL,
             'ra': 113.456,
-            'dec': -22.1
+            'dec': -22.1,
+            'permissions': 'PUBLIC',
         }
         user = User.objects.create(username='testuser')
         self.target = Target.objects.create(**self.form_data)
@@ -1081,7 +1121,7 @@ class TestTargetSearch(TestCase):
 
     @override_settings(EXTRA_FIELDS=[{'name': 'birthday', 'type': 'datetime'}])
     def test_search_extra_datetime(self):
-        TargetExtra.objects.create(target=self.st, key='birthday', value='2019-02-14')
+        TargetExtra.objects.create(target=self.st, key='birthday', value="2019-02-14T00:00:00.000000+00:00")
 
         response = self.client.get(reverse('targets:list') + '?birthday_after=2019-02-13&birthday_before=2019-02-15')
         self.assertContains(response, '1337target')
@@ -1917,3 +1957,82 @@ class TestTargetMerge(TestCase):
         target_merge(self.st1, self.st2)
         for observationrecord in st2_observationrecords:
             self.assertIn(observationrecord, ObservationRecord.objects.filter(target=self.st1))
+
+
+class TestTargetSeed(TestCase):
+    def test_seed_targets_authenticated(self):
+        user = User.objects.create(username='testuser')
+        self.client.force_login(user)
+        self.assertFalse(Target.objects.exists())
+        response = self.client.post(reverse('targets:seed'))
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(Target.objects.exists())
+
+    def test_seed_targets_unauthenticated(self):
+        self.assertFalse(Target.objects.exists())
+        response = self.client.post(reverse('targets:seed'))
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(Target.objects.exists())
+
+
+class TestTargetPermissionFiltering(TestCase):
+    def setUp(self):
+        self.user = User.objects.create(username='testuser')
+        self.group = Group.objects.create(name='testgroup')
+        self.open_target = SiderealTargetFactory.create(permissions=Target.Permissions.OPEN)
+        self.public_target = SiderealTargetFactory.create(permissions=Target.Permissions.PUBLIC)
+        self.private_group_target = SiderealTargetFactory.create(permissions=Target.Permissions.PRIVATE)
+        self.private_user_target = SiderealTargetFactory.create(permissions=Target.Permissions.PRIVATE)
+
+    def test_open_targets_visible(self):
+        result = targets_for_user(AnonymousUser(), Target.objects.all(), 'view_target')
+        self.assertIn(self.open_target, result)
+        self.assertNotIn(self.public_target, result)
+        self.assertNotIn(self.private_group_target, result)
+        self.assertNotIn(self.private_user_target, result)
+
+    def test_public_targets_visible(self):
+        result = targets_for_user(self.user, Target.objects.all(), 'view_target')
+        self.assertIn(self.open_target, result)
+        self.assertIn(self.public_target, result)
+        self.assertNotIn(self.private_group_target, result)
+        self.assertNotIn(self.private_user_target, result)
+
+    def test_private_group_permission(self):
+        self.group.user_set.add(self.user)
+        assign_perm('tom_targets.view_target', self.group, self.private_group_target)
+        result = targets_for_user(self.user, Target.objects.all(), 'view_target')
+        self.assertIn(self.open_target, result)
+        self.assertIn(self.public_target, result)
+        self.assertIn(self.private_group_target, result)
+        self.assertNotIn(self.private_user_target, result)
+
+    def test_private_user_permission(self):
+        assign_perm('tom_targets.view_target', self.user, self.private_user_target)
+        result = targets_for_user(self.user, Target.objects.all(), 'view_target')
+        self.assertIn(self.open_target, result)
+        self.assertIn(self.public_target, result)
+        self.assertNotIn(self.private_group_target, result)
+        self.assertIn(self.private_user_target, result)
+
+    def test_private_user_permission_wrong_action(self):
+        assign_perm('tom_targets.view_target', self.user, self.private_user_target)
+        result = targets_for_user(self.user, Target.objects.all(), 'delete_target')
+        self.assertIn(self.open_target, result)
+        self.assertIn(self.public_target, result)
+        self.assertNotIn(self.private_group_target, result)
+        self.assertNotIn(self.private_user_target, result)
+
+    def test_superuser_permission(self):
+        self.user.is_superuser = True
+        self.user.save()
+        result = targets_for_user(self.user, Target.objects.all(), 'view_target')
+        self.assertIn(self.open_target, result)
+        self.assertIn(self.public_target, result)
+        self.assertIn(self.private_group_target, result)
+        self.assertIn(self.private_user_target, result)
+
+    def test_typo_in_action(self):
+        """Make sure a typo doesn't expose data"""
+        with self.assertRaises(AssertionError):
+            targets_for_user(self.user, Target.objects.all(), 'view_targett')

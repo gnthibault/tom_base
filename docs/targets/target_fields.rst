@@ -101,8 +101,8 @@ The following is an example of a custom target model that adds a boolean field a
 
 
     class UserDefinedTarget(BaseTarget):
-        example_bool = models.BooleanField(default=False)
-        example_number = models.FloatField(null=True, blank=True)
+        example_bool = models.BooleanField(default=False, verbose_name='Example Boolean')
+        example_number = models.FloatField(null=True, blank=True, help_text='Pick a number.')
 
         # Set Hidden Fields
         example_bool.hidden = True
@@ -118,9 +118,10 @@ The following is an example of a custom target model that adds a boolean field a
 
 The model name, ``UserDefinedTarget`` in the example (line 6), can be replaced by whatever CamelCase name you want, but
 it must be a subclass of ``tom_targets.BaseTarget``. The ``null=True`` for ``example_number`` will allow for that field
-to be optional in the model form. The permissions in the class Meta (lines 15-20) are required for the
-TOM Toolkit to work properly. The ``hidden`` attribute can be set to ``True`` to hide the field from the target
-detail page.
+to be optional in the model form. Adding ``help_text=""`` to a field will provide text to be displayed under the form
+field when editing a target and in a tooltip when hovering over the field name on the target detail page. The
+permissions in the class Meta (lines 15-20) are required for the TOM Toolkit to work properly. The ``hidden``
+attribute can be set to ``True`` to hide the field from the target detail page.
 
 Reference the Django documentation on `Model Fields <https://docs.djangoproject.com/en/stable/ref/models/fields/#field-types>`__
 in order to learn more about Django models and their associated fields. The
@@ -260,6 +261,10 @@ the built in fields whenever possible.
 
 Enabling extra fields
 ~~~~~~~~~~~~~~~~~~~~~
+``EXTRA_FIELDS`` can be implemented in two different ways. If a user wants to add a unique extra field to a individual
+target, that can be done by either adding a "Tag" to a target through the UI, or by adding a single extra field
+programmatically. If the user instead wants a common extra field to be available for all targets, they can follow these
+instructions:
 
 To start, find the ``EXTRA_FIELDS`` definition in your ``settings.py``:
 

@@ -7,7 +7,7 @@ from django.contrib.auth.models import Group
 from guardian.shortcuts import assign_perm, get_groups_with_perms, remove_perm
 
 from tom_dataproducts.sharing import get_sharing_destination_options
-from .models import Target, TargetExtra, TargetName, TargetList
+from .models import Target, TargetExtra, TargetName, TargetList, PersistentShare
 from tom_targets.base_models import (SIDEREAL_FIELDS, NON_SIDEREAL_FIELDS, REQUIRED_SIDEREAL_FIELDS,
                                      REQUIRED_NON_SIDEREAL_FIELDS, REQUIRED_NON_SIDEREAL_FIELDS_PER_SCHEME,
                                      IGNORE_FIELDS)
@@ -154,6 +154,18 @@ class NonSiderealTargetCreateForm(TargetForm):
                                         field.name not in SIDEREAL_FIELDS + IGNORE_FIELDS + NON_SIDEREAL_FIELDS]
 
 
+class UnknownTypeTargetCreateForm(TargetForm):
+    """If we don't know the type, this provides a generic Target Creation form that requires type to be set.
+    The only difference between this and the base TargetForm is that the 'type' field is required, and not hidden.
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['type'].required = True
+
+    class Meta(TargetForm.Meta):
+        widgets = {}
+
+
 class TargetVisibilityForm(forms.Form):
     start_time = forms.DateTimeField(required=True, label='Start Time', widget=forms.TextInput(attrs={'type': 'date'}))
     end_time = forms.DateTimeField(required=True, label='End Time', widget=forms.TextInput(attrs={'type': 'date'}))
@@ -229,3 +241,30 @@ class TargetMergeForm(forms.Form):
                 'hx-target': '#id_target_merge_fields',  # replace name_select element
              })
     )
+
+
+class AdminPersistentShareForm(forms.ModelForm):
+    destination = forms.ChoiceField(choices=[], label='Share Destination', required=True)
+
+    class Meta:
+        model = PersistentShare
+        fields = '__all__'
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['destination'].choices = get_sharing_destination_options(include_download=False)
+
+
+class PersistentShareForm(AdminPersistentShareForm):
+    target = forms.IntegerField(label='Target ID', initial=0, required=True)
+    share_existing_data = forms.BooleanField(label='Share existing data immediately', required=False, initial=False)
+
+    def __init__(self, *args, **kwargs):
+        try:
+            self.target_id = kwargs.pop('target_id')
+        except KeyError:
+            self.target_id = None
+        super().__init__(*args, **kwargs)
+        if self.target_id:
+            self.fields['target'].initial = self.target_id
+            self.fields['target'].disabled = True
