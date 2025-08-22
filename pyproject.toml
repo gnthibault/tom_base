@@ -39,7 +39,7 @@ classifiers = [
     'Topic :: Scientific/Engineering :: Physics'
 ]
 
-dynamic = ["version"]
+dynamic = []
 requires-python = ">=3.9.0,<3.13"
 dependencies = [
     "numpy >1.24,<2.2",
@@ -71,7 +71,9 @@ dependencies = [
     "django-tasks (>=0.6.1,<0.7.0)",
     "django-environ (>=0.12.0,<0.13.0)",
     "google-cloud-secret-manager (>=2.24.0,<3.0.0)",
+    "django-storages[google] (>=1.14.6,<2.0.0)",
 ]
+version = "2.26.0.post18.dev0+071db3a3"
 
 [tool.poetry]
 packages = [ # tell poetry build that the repo is named tom_base (which != name, above)
@@ -86,7 +88,6 @@ packages = [ # tell poetry build that the repo is named tom_base (which != name,
     { include="tom_targets"},
     { include="*", format="sdist"},
 ]
-version = "0.0.0" # version supplied by poetry-dynamic-versioning
 
 [tool.poetry.group.test.dependencies]
 responses = ">=0.23,<0.26"
@@ -113,7 +114,7 @@ flake8 = ">=6.0,<7.2"
 poetry-dynamic-versioning = { version = ">=1.0.0,<2.0.0", extras = ["plugin"] }
 
 [tool.poetry-dynamic-versioning]
-enable = true
+enable = false
 vcs = "git"
 style = "pep440"
 # the default pattern regex makes the 'v' manditory
