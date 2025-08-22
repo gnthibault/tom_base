@@ -1447,6 +1447,28 @@ grpcio = ">=1.74.0"
 protobuf = ">=6.31.1,<7.0.0"
 
 [[package]]
+name = "gunicorn"
+version = "23.0.0"
+description = "WSGI HTTP Server for UNIX"
+optional = false
+python-versions = ">=3.7"
+groups = ["main"]
+files = [
+    {file = "gunicorn-23.0.0-py3-none-any.whl", hash = "sha256:ec400d38950de4dfd418cff8328b2c8faed0edb0d517d3394e457c317908ca4d"},
+    {file = "gunicorn-23.0.0.tar.gz", hash = "sha256:f014447a0101dc57e294f6c18ca6b40227a4c90e9bdb586042628030cba004ec"},
+]
+
+[package.dependencies]
+packaging = "*"
+
+[package.extras]
+eventlet = ["eventlet (>=0.24.1,!=0.36.0)"]
+gevent = ["gevent (>=1.4.0)"]
+setproctitle = ["setproctitle"]
+testing = ["coverage", "eventlet", "gevent", "pytest", "pytest-cov"]
+tornado = ["tornado (>=0.2)"]
+
+[[package]]
 name = "gwcs"
 version = "0.21.0"
 description = "Generalized World Coordinate System"
@@ -3028,4 +3050,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.9.0,<3.13"
-content-hash = "9f1bd1d69e18163af10f534b161069303ce10c4dd154922d764d06feafae28d7"
+content-hash = "6d84ce2b82a5e71c3ff674917d97073b7e4a4a69c8e6b1786e335c232a2cb58b"
