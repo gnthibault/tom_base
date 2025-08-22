@@ -90,7 +90,7 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install poetry
           poetry install
-      - id: 'migrate_db + collect_static'
+      - id: 'migrate_db_and_collect_static'
         run: |- # see https://github.com/GoogleCloudPlatform/cloud-sql-proxy/issues/1989
           curl -o ./cloud-sql-proxy https://storage.googleapis.com/cloud-sql-connectors/cloud-sql-proxy/v2.13.0/cloud-sql-proxy.linux.amd64
           chmod +x ./cloud-sql-proxy
