@@ -1,13 +1,25 @@
 from crispy_forms.layout import Layout
 from django import forms
-import requests
 from enum import Enum
+import logging
+import requests
+
+# django
+from django.conf import settings
+from django.core.files.base import ContentFile
 
 # Locals
+from tom_dataproducts.data_processor import run_data_processor
 from tom_observations.facility import BaseRoboticObservationFacility, BaseRoboticObservationForm
 from tom_targets.models import Target
 
+logger = logging.getLogger(__name__)
 
+
+try:
+    AUTO_THUMBNAILS = settings.AUTO_THUMBNAILS
+except AttributeError:
+    AUTO_THUMBNAILS = False
 
 
 class InstrumentSetup(str, Enum):
@@ -94,6 +106,34 @@ class RemoteObservatoryFacility(BaseRoboticObservationFacility):
         response = requests.get(url)
         response.raise_for_status()
         return response.json()['data_products']
+
+    def save_data_products(self, observation_record, product_id=None):
+        from tom_dataproducts.models import DataProduct
+        from tom_dataproducts.utils import create_image_dataproduct
+        final_products = []
+        products = self.data_products(observation_record.observation_id, product_id)
+
+        for product in products:
+            dp, created = DataProduct.objects.get_or_create(
+                product_id=product['id'],
+                target=observation_record.target,
+                observation_record=observation_record,
+                data_product_type=product['data_product_type'],
+            )
+            if created:
+                product_data = requests.get(product['url']).content
+                dfile = ContentFile(product_data)
+                dp.data.save(product['filename'], dfile)
+                dp.save()
+                logger.info('Saved new dataproduct: {}'.format(dp.data))
+                reduced_data = run_data_processor(dp)
+
+            if AUTO_THUMBNAILS:
+                create_image_dataproduct(dp)
+                dp.get_preview()
+            final_products.append(dp)
+        return final_products
+
 
     def get_template_form(self):
         pass
